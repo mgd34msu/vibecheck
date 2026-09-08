@@ -275,6 +275,8 @@ export class Transaction {
   flush(): Cursor {
     if (this.flushed) throw new Error("a transaction may be flushed only once");
     const pending = new Set<SessionId>();
+    if (this.changes.size > 0 && this.actorId !== undefined)
+      pending.add(this.actorId);
     for (const change of this.changes.values()) {
       if (change.kind === "work") pending.add(change.record.session_id);
       if (change.kind === "project")

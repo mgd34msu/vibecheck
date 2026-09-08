@@ -1,6 +1,6 @@
 {
   "name": "vibecheck",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A local MCP work ledger for coding agents to record project work, claims, and handoffs.",
   "author": {
     "name": "Mike Davis",

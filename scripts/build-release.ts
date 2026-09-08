@@ -16,6 +16,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { z } from "zod";
+import { version } from "../src/version.js";
 
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export type Platform = "codex" | "claude";
@@ -24,7 +25,7 @@ export const commonFiles = [
   "README.md",
   "docs/protocol.md",
   "docs/agent-usage.md",
-  "docs/releases/v1.0.0.md",
+  `docs/releases/v${version}.md`,
   "examples/mcp.json",
   "runtime/vibecheck.mjs",
   "runtime/THIRD-PARTY-NOTICES.txt",

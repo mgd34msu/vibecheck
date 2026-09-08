@@ -2,7 +2,7 @@
 
 Vibecheck is a passive MCP work ledger for coding agents. It records a shared task plan, session ancestry, claims, work locations, blockers, and commits in SQLite. Agents report changes through nine tools. The board does not run agents, schedule work, execute Git commands, or verify that reported work happened.
 
-This repository contains the TypeScript implementation, version 1.0.0. The Python implementation is archived separately at [mgd34msu/vibecheck-python](https://github.com/mgd34msu/vibecheck-python).
+This repository contains the TypeScript implementation, version 1.0.1. The Python implementation is archived separately at [mgd34msu/vibecheck-python](https://github.com/mgd34msu/vibecheck-python).
 
 ## Install the plugin
 
@@ -11,18 +11,18 @@ Use a Codex or Claude Code client with native plugin support. Install Bash and e
 For Codex, install the tagged marketplace:
 
 ```bash
-codex plugin marketplace add mgd34msu/vibecheck --ref v1.0.0
+codex plugin marketplace add mgd34msu/vibecheck --ref v1.0.1
 codex plugin add vibecheck@vibecheck
 ```
 
 For Claude Code:
 
 ```bash
-claude plugin marketplace add mgd34msu/vibecheck@v1.0.0
+claude plugin marketplace add mgd34msu/vibecheck@v1.0.1
 claude plugin install vibecheck@vibecheck
 ```
 
-These commands select the v1.0.0 Git tag. Enable the plugin in your client and reload the session if the tools do not appear. The plugin registers its MCP server and supplies a shared [vibecheck skill](skills/vibecheck/SKILL.md). There are no startup hooks that register projects or force the skill to run on every first turn.
+These commands select the v1.0.1 Git tag. Enable the plugin in your client and reload the session if the tools do not appear. The plugin registers its MCP server and supplies a shared [vibecheck skill](skills/vibecheck/SKILL.md). There are no startup hooks that register projects or force the skill to run on every first turn.
 
 Ask the agent to use Vibecheck to report its current work or recover an earlier plan. Supply a stable project ID and repository identity. For a standing project policy, copy [the agent instructions](docs/agent-usage.md) into your project's `AGENTS.md`.
 
@@ -43,9 +43,9 @@ bun run verify:release
 
 The build requires Bun, `zip`, and `tar`. It refreshes the bundled runtime and writes these files in `artifacts/`:
 
-- `vibecheck-codex-plugin-1.0.0.zip`, the Codex plugin bundle.
-- `vibecheck-claude-plugin-1.0.0.zip`, the Claude plugin bundle.
-- `vibecheck-runtime-1.0.0.tar.gz`, the standalone bundled runtime.
+- `vibecheck-codex-plugin-1.0.1.zip`, the Codex plugin bundle.
+- `vibecheck-claude-plugin-1.0.1.zip`, the Claude plugin bundle.
+- `vibecheck-runtime-1.0.1.tar.gz`, the standalone bundled runtime.
 - `SHA256SUMS`, checksums for the release artifacts.
 
 Verify downloaded artifacts against `SHA256SUMS` with your platform's SHA-256 utility. Each plugin archive extracts into a `vibecheck` directory with its native manifest and marketplace catalog. For an extracted Codex archive, register that directory and install:
@@ -62,7 +62,7 @@ claude plugin marketplace add /absolute/path/to/vibecheck
 claude plugin install vibecheck@vibecheck
 ```
 
-Choose either the GitHub marketplace or the extracted local marketplace for a client. Keep a local marketplace directory available for subsequent plugin management. See [release notes](docs/releases/v1.0.0.md) for publication status.
+Choose either the GitHub marketplace or the extracted local marketplace for a client. Keep a local marketplace directory available for subsequent plugin management. See [release notes](docs/releases/v1.0.1.md) for publication status.
 
 ## Run from source
 
@@ -324,10 +324,10 @@ bun run verify
 
 The verification command checks formatting, strict types, forbidden assertions, and bundled runtime freshness. It runs the behavior tests under Bun and compiled JavaScript under Node.js, then builds the package. Node.js 24 or later is required for the Node tests. After changing runtime source or dependencies, run `bun run build:release` to refresh the committed bundle before verification.
 
-The release passes 125 tests on Bun 1.3.14, Node.js 24.0.0, and Node.js 26.1.0. A frozen 995-case validation corpus and imported SQLite fixtures check compatibility with the Python implementation, including historical records and saved retry responses. The TypeScript compiler is version 7.0.2. A development-only TypeScript 6 compiler API parses source for the forbidden-type checks.
+The release passes 127 tests on Bun 1.3.14, Node.js 24.0.0, and Node.js 26.1.0. A frozen 995-case validation corpus and imported SQLite fixtures check compatibility with the Python implementation, including historical records and saved retry responses. The TypeScript compiler is version 7.0.2. A development-only TypeScript 6 compiler API parses source for the forbidden-type checks.
 
 The implementation derives domain types from input schemas. Boundary validation rejects invalid external data before business logic runs. Authored TypeScript uses no `any`, type assertions, non-null assertions, or compiler suppression comments. SQLite uses the runtime's built-in `bun:sqlite` or `node:sqlite` adapter.
 
-See [release notes](docs/releases/v1.0.0.md) for the release contents and verification status.
+See [release notes](docs/releases/v1.0.1.md) for the release contents and verification status.
 
 The board retains reported metadata, not repository knowledge or conversations. It does not scan the repository to understand code. Session identities and work status are cooperative self-reports; Git commits and actual outcomes require separate verification. Dependencies and `blocking_path` describe the graph without scheduling work or estimating completion time.

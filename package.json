@@ -1,6 +1,6 @@
 {
   "name": "@mgd34msu/vibecheck",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A compact MCP ledger for agent work, dependencies, sessions, and Git provenance.",
   "type": "module",
   "engines": {

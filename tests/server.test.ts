@@ -1,3 +1,4 @@
+import { version } from "../src/version.js";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { mkdtemp, rm, symlink } from "node:fs/promises";
@@ -478,7 +479,7 @@ test("CLI version, bad configuration, and stdin EOF terminate cleanly", async (t
   const { path } = await temporaryBoard(t);
   assert.deepEqual(await runCli(["--version"]), {
     code: 0,
-    stdout: "vibecheck 1.0.0\n",
+    stdout: `vibecheck ${version}\n`,
     stderr: "",
   });
   const invalid = await runCli(["--transport", "streamable-http"], {
@@ -595,7 +596,7 @@ test("installed command symlinks run the CLI entry point", async (t) => {
   await symlink(cliPath, executable);
   assert.deepEqual(await runCli(["--version"], {}, executable), {
     code: 0,
-    stdout: "vibecheck 1.0.0\n",
+    stdout: `vibecheck ${version}\n`,
     stderr: "",
   });
 });

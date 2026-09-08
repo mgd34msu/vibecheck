@@ -24,6 +24,21 @@ flowchart LR
   T8 --> T9
 ```
 
+## Completion audit follow-up
+
+The final completion audit found that consecutive coordinator corrections within one millisecond could omit the actor's historical session context. Release v1.0.0 remains immutable. The correction ships as v1.0.1.
+
+| Task | Dependencies | Deliverable                                                                                | State          |
+| ---- | ------------ | ------------------------------------------------------------------------------------------ | -------------- |
+| T10  | T8           | Capture actors independently of heartbeat timing and add deterministic regression coverage | Complete       |
+| T11  | T10          | Independent confirmation and complete Bun, Node, and native plugin verification            | Complete       |
+| T12  | T11          | Publish and verify the v1.0.1 patch release                                                | Release v1.0.1 |
+
+```mermaid
+flowchart LR
+  T8 --> T10 --> T11 --> T12
+```
+
 ## Architecture contract
 
 - ESM TypeScript targets ES2023 with NodeNext resolution. Relative imports use `.js` so emitted JavaScript runs directly. Bun runs the TypeScript sources.
