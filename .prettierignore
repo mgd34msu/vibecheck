@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.test-build/
+runtime/
+artifacts/
+bun.lock
+tests/fixtures/*.json
+tests/fixtures/*.sql

@@ -1,0 +1,723 @@
+{
+  "claim_request": {
+    "project_id": "test",
+    "request_id": "reference-claim",
+    "session_id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+    "task_id": "a",
+    "expected_revision": 1,
+    "location": {
+      "branch": "feature",
+      "target_branch": "main",
+      "paths": [
+        "src/α.ts"
+      ]
+    }
+  },
+  "claim_response": {
+    "task": {
+      "created_at": "2026-09-08T06:12:50.640999+00:00",
+      "depends_on": [],
+      "id": "a",
+      "label": "Original α",
+      "owner_work_id": "w_b739839f1c2d4ea08fe31c1a9d34e7b6",
+      "revision": 2,
+      "status": "in_progress",
+      "supersedes": [],
+      "updated_at": "2026-09-08T06:12:50.641646+00:00"
+    },
+    "work": {
+      "blocker": null,
+      "commit": null,
+      "created_at": "2026-09-08T06:12:50.641646+00:00",
+      "id": "w_b739839f1c2d4ea08fe31c1a9d34e7b6",
+      "integration_commit": null,
+      "integration_required": false,
+      "location": {
+        "base_commit": null,
+        "branch": "feature",
+        "checkout": null,
+        "paths": [
+          "src/α.ts"
+        ],
+        "repository": null,
+        "target_branch": "main"
+      },
+      "parent_work_id": null,
+      "predecessor_work_id": null,
+      "revision": 1,
+      "role": "owner",
+      "session_id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+      "status": "in_progress",
+      "task_id": "a",
+      "updated_at": "2026-09-08T06:12:50.641646+00:00"
+    },
+    "cursor": 4,
+    "plan_revision": 1,
+    "map_hint": "include_map:true"
+  },
+  "session_id": "s_0b74dfdce56e426e9ab7bfe444f7d9f1",
+  "task": {
+    "created_at": "2026-09-08T06:12:50.640999+00:00",
+    "depends_on": [],
+    "id": "a",
+    "label": "Original α",
+    "owner_work_id": "w_8aff479c2ab746f3b7d1f2ad0907bbd5",
+    "revision": 5,
+    "status": "in_progress",
+    "supersedes": [],
+    "updated_at": "2026-09-08T06:12:50.644386+00:00"
+  },
+  "work": {
+    "blocker": null,
+    "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "created_at": "2026-09-08T06:12:50.644386+00:00",
+    "id": "w_8aff479c2ab746f3b7d1f2ad0907bbd5",
+    "integration_commit": null,
+    "integration_required": true,
+    "location": {
+      "base_commit": null,
+      "branch": "feature",
+      "checkout": null,
+      "paths": [
+        "src/α.ts"
+      ],
+      "repository": null,
+      "target_branch": "main"
+    },
+    "parent_work_id": null,
+    "predecessor_work_id": "w_b739839f1c2d4ea08fe31c1a9d34e7b6",
+    "revision": 1,
+    "role": "owner",
+    "session_id": "s_0b74dfdce56e426e9ab7bfe444f7d9f1",
+    "status": "in_progress",
+    "task_id": "a",
+    "updated_at": "2026-09-08T06:12:50.644386+00:00"
+  },
+  "root_id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+  "child_id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+  "history": {
+    "project_id": "test",
+    "work": [
+      {
+        "blocker": null,
+        "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "created_at": "2026-09-08T06:12:50.644386+00:00",
+        "id": "w_8aff479c2ab746f3b7d1f2ad0907bbd5",
+        "integration_commit": null,
+        "location": {
+          "base_commit": null,
+          "branch": "feature",
+          "checkout": null,
+          "paths": [
+            "src/α.ts"
+          ],
+          "repository": null,
+          "target_branch": "main"
+        },
+        "parent_work_id": null,
+        "predecessor_work_id": "w_b739839f1c2d4ea08fe31c1a9d34e7b6",
+        "revision": 1,
+        "role": "owner",
+        "session_id": "s_0b74dfdce56e426e9ab7bfe444f7d9f1",
+        "status": "in_progress",
+        "task_id": "a",
+        "updated_at": "2026-09-08T06:12:50.644386+00:00"
+      },
+      {
+        "blocker": null,
+        "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "created_at": "2026-09-08T06:12:50.641646+00:00",
+        "id": "w_b739839f1c2d4ea08fe31c1a9d34e7b6",
+        "integration_commit": null,
+        "location": {
+          "base_commit": null,
+          "branch": "feature",
+          "checkout": null,
+          "paths": [
+            "src/α.ts"
+          ],
+          "repository": null,
+          "target_branch": "main"
+        },
+        "parent_work_id": null,
+        "predecessor_work_id": null,
+        "revision": 4,
+        "role": "owner",
+        "session_id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+        "status": "released",
+        "task_id": "a",
+        "updated_at": "2026-09-08T06:12:50.644386+00:00"
+      }
+    ],
+    "sessions": [
+      {
+        "created_at": "2026-09-08T06:12:50.640261+00:00",
+        "effort": "high",
+        "external_session_id": "child",
+        "id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+        "last_seen_at": "2026-09-08T06:12:50.645115+00:00",
+        "model": "new-model",
+        "parent_session_id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+        "revision": 6,
+        "runtime": "codex",
+        "updated_at": "2026-09-08T06:12:50.645115+00:00",
+        "vendor": "openai"
+      },
+      {
+        "created_at": "2026-09-08T06:12:50.643593+00:00",
+        "effort": "high",
+        "external_session_id": "recipient",
+        "id": "s_0b74dfdce56e426e9ab7bfe444f7d9f1",
+        "last_seen_at": "2026-09-08T06:12:50.643593+00:00",
+        "model": "old-model",
+        "parent_session_id": null,
+        "revision": 1,
+        "runtime": "codex",
+        "updated_at": "2026-09-08T06:12:50.643593+00:00",
+        "vendor": "openai"
+      },
+      {
+        "created_at": "2026-09-08T06:12:50.639035+00:00",
+        "effort": "high",
+        "external_session_id": "root",
+        "id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+        "last_seen_at": "2026-09-08T06:12:50.645898+00:00",
+        "model": "new-root-model",
+        "parent_session_id": null,
+        "revision": 3,
+        "runtime": "codex",
+        "updated_at": "2026-09-08T06:12:50.645898+00:00",
+        "vendor": "openai"
+      }
+    ],
+    "matched_work_count": 2,
+    "cursor": 8,
+    "has_more": false,
+    "changes": [
+      {
+        "seq": 4,
+        "actor_id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+        "created_at": "2026-09-08T06:12:50.641646+00:00",
+        "records": [
+          {
+            "id": "w_b739839f1c2d4ea08fe31c1a9d34e7b6",
+            "kind": "work",
+            "record": {
+              "blocker": null,
+              "commit": null,
+              "created_at": "2026-09-08T06:12:50.641646+00:00",
+              "id": "w_b739839f1c2d4ea08fe31c1a9d34e7b6",
+              "integration_commit": null,
+              "location": {
+                "base_commit": null,
+                "branch": "feature",
+                "checkout": null,
+                "paths": [
+                  "src/α.ts"
+                ],
+                "repository": null,
+                "target_branch": "main"
+              },
+              "parent_work_id": null,
+              "predecessor_work_id": null,
+              "revision": 1,
+              "role": "owner",
+              "session_id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+              "status": "in_progress",
+              "task_id": "a",
+              "updated_at": "2026-09-08T06:12:50.641646+00:00"
+            }
+          },
+          {
+            "id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+            "kind": "session",
+            "record": {
+              "created_at": "2026-09-08T06:12:50.640261+00:00",
+              "effort": "high",
+              "external_session_id": "child",
+              "id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+              "last_seen_at": "2026-09-08T06:12:50.641646+00:00",
+              "model": "old-model",
+              "parent_session_id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+              "revision": 2,
+              "runtime": "codex",
+              "updated_at": "2026-09-08T06:12:50.641646+00:00",
+              "vendor": "openai"
+            }
+          },
+          {
+            "context": true,
+            "id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+            "kind": "session",
+            "record": {
+              "created_at": "2026-09-08T06:12:50.639035+00:00",
+              "effort": "high",
+              "external_session_id": "root",
+              "id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+              "last_seen_at": "2026-09-08T06:12:50.640999+00:00",
+              "model": "old-model",
+              "parent_session_id": null,
+              "revision": 2,
+              "runtime": "codex",
+              "updated_at": "2026-09-08T06:12:50.640999+00:00",
+              "vendor": "openai"
+            }
+          }
+        ]
+      },
+      {
+        "seq": 5,
+        "actor_id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+        "created_at": "2026-09-08T06:12:50.642331+00:00",
+        "records": [
+          {
+            "id": "w_b739839f1c2d4ea08fe31c1a9d34e7b6",
+            "kind": "work",
+            "record": {
+              "blocker": null,
+              "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "created_at": "2026-09-08T06:12:50.641646+00:00",
+              "id": "w_b739839f1c2d4ea08fe31c1a9d34e7b6",
+              "integration_commit": null,
+              "location": {
+                "base_commit": null,
+                "branch": "feature",
+                "checkout": null,
+                "paths": [
+                  "src/α.ts"
+                ],
+                "repository": null,
+                "target_branch": "main"
+              },
+              "parent_work_id": null,
+              "predecessor_work_id": null,
+              "revision": 2,
+              "role": "owner",
+              "session_id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+              "status": "awaiting_integration",
+              "task_id": "a",
+              "updated_at": "2026-09-08T06:12:50.642331+00:00"
+            }
+          },
+          {
+            "id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+            "kind": "session",
+            "record": {
+              "created_at": "2026-09-08T06:12:50.640261+00:00",
+              "effort": "high",
+              "external_session_id": "child",
+              "id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+              "last_seen_at": "2026-09-08T06:12:50.642331+00:00",
+              "model": "old-model",
+              "parent_session_id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+              "revision": 3,
+              "runtime": "codex",
+              "updated_at": "2026-09-08T06:12:50.642331+00:00",
+              "vendor": "openai"
+            }
+          },
+          {
+            "context": true,
+            "id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+            "kind": "session",
+            "record": {
+              "created_at": "2026-09-08T06:12:50.639035+00:00",
+              "effort": "high",
+              "external_session_id": "root",
+              "id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+              "last_seen_at": "2026-09-08T06:12:50.640999+00:00",
+              "model": "old-model",
+              "parent_session_id": null,
+              "revision": 2,
+              "runtime": "codex",
+              "updated_at": "2026-09-08T06:12:50.640999+00:00",
+              "vendor": "openai"
+            }
+          }
+        ]
+      },
+      {
+        "seq": 6,
+        "actor_id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+        "created_at": "2026-09-08T06:12:50.642967+00:00",
+        "records": [
+          {
+            "id": "w_b739839f1c2d4ea08fe31c1a9d34e7b6",
+            "kind": "work",
+            "record": {
+              "blocker": null,
+              "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "created_at": "2026-09-08T06:12:50.641646+00:00",
+              "id": "w_b739839f1c2d4ea08fe31c1a9d34e7b6",
+              "integration_commit": null,
+              "location": {
+                "base_commit": null,
+                "branch": "feature",
+                "checkout": null,
+                "paths": [
+                  "src/α.ts"
+                ],
+                "repository": null,
+                "target_branch": "main"
+              },
+              "parent_work_id": null,
+              "predecessor_work_id": null,
+              "revision": 3,
+              "role": "owner",
+              "session_id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+              "status": "in_progress",
+              "task_id": "a",
+              "updated_at": "2026-09-08T06:12:50.642967+00:00"
+            }
+          },
+          {
+            "id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+            "kind": "session",
+            "record": {
+              "created_at": "2026-09-08T06:12:50.640261+00:00",
+              "effort": "high",
+              "external_session_id": "child",
+              "id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+              "last_seen_at": "2026-09-08T06:12:50.642967+00:00",
+              "model": "old-model",
+              "parent_session_id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+              "revision": 4,
+              "runtime": "codex",
+              "updated_at": "2026-09-08T06:12:50.642967+00:00",
+              "vendor": "openai"
+            }
+          },
+          {
+            "context": true,
+            "id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+            "kind": "session",
+            "record": {
+              "created_at": "2026-09-08T06:12:50.639035+00:00",
+              "effort": "high",
+              "external_session_id": "root",
+              "id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+              "last_seen_at": "2026-09-08T06:12:50.640999+00:00",
+              "model": "old-model",
+              "parent_session_id": null,
+              "revision": 2,
+              "runtime": "codex",
+              "updated_at": "2026-09-08T06:12:50.640999+00:00",
+              "vendor": "openai"
+            }
+          }
+        ]
+      },
+      {
+        "seq": 8,
+        "actor_id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+        "created_at": "2026-09-08T06:12:50.644386+00:00",
+        "records": [
+          {
+            "id": "w_8aff479c2ab746f3b7d1f2ad0907bbd5",
+            "kind": "work",
+            "record": {
+              "blocker": null,
+              "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "created_at": "2026-09-08T06:12:50.644386+00:00",
+              "id": "w_8aff479c2ab746f3b7d1f2ad0907bbd5",
+              "integration_commit": null,
+              "location": {
+                "base_commit": null,
+                "branch": "feature",
+                "checkout": null,
+                "paths": [
+                  "src/α.ts"
+                ],
+                "repository": null,
+                "target_branch": "main"
+              },
+              "parent_work_id": null,
+              "predecessor_work_id": "w_b739839f1c2d4ea08fe31c1a9d34e7b6",
+              "revision": 1,
+              "role": "owner",
+              "session_id": "s_0b74dfdce56e426e9ab7bfe444f7d9f1",
+              "status": "in_progress",
+              "task_id": "a",
+              "updated_at": "2026-09-08T06:12:50.644386+00:00"
+            }
+          },
+          {
+            "id": "w_b739839f1c2d4ea08fe31c1a9d34e7b6",
+            "kind": "work",
+            "record": {
+              "blocker": null,
+              "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "created_at": "2026-09-08T06:12:50.641646+00:00",
+              "id": "w_b739839f1c2d4ea08fe31c1a9d34e7b6",
+              "integration_commit": null,
+              "location": {
+                "base_commit": null,
+                "branch": "feature",
+                "checkout": null,
+                "paths": [
+                  "src/α.ts"
+                ],
+                "repository": null,
+                "target_branch": "main"
+              },
+              "parent_work_id": null,
+              "predecessor_work_id": null,
+              "revision": 4,
+              "role": "owner",
+              "session_id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+              "status": "released",
+              "task_id": "a",
+              "updated_at": "2026-09-08T06:12:50.644386+00:00"
+            }
+          },
+          {
+            "id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+            "kind": "session",
+            "record": {
+              "created_at": "2026-09-08T06:12:50.640261+00:00",
+              "effort": "high",
+              "external_session_id": "child",
+              "id": "s_03b4c1ff51b7422ab82d25a7f707e0fd",
+              "last_seen_at": "2026-09-08T06:12:50.644386+00:00",
+              "model": "old-model",
+              "parent_session_id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+              "revision": 5,
+              "runtime": "codex",
+              "updated_at": "2026-09-08T06:12:50.644386+00:00",
+              "vendor": "openai"
+            }
+          },
+          {
+            "context": true,
+            "id": "s_0b74dfdce56e426e9ab7bfe444f7d9f1",
+            "kind": "session",
+            "record": {
+              "created_at": "2026-09-08T06:12:50.643593+00:00",
+              "effort": "high",
+              "external_session_id": "recipient",
+              "id": "s_0b74dfdce56e426e9ab7bfe444f7d9f1",
+              "last_seen_at": "2026-09-08T06:12:50.643593+00:00",
+              "model": "old-model",
+              "parent_session_id": null,
+              "revision": 1,
+              "runtime": "codex",
+              "updated_at": "2026-09-08T06:12:50.643593+00:00",
+              "vendor": "openai"
+            }
+          },
+          {
+            "context": true,
+            "id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+            "kind": "session",
+            "record": {
+              "created_at": "2026-09-08T06:12:50.639035+00:00",
+              "effort": "high",
+              "external_session_id": "root",
+              "id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+              "last_seen_at": "2026-09-08T06:12:50.640999+00:00",
+              "model": "old-model",
+              "parent_session_id": null,
+              "revision": 2,
+              "runtime": "codex",
+              "updated_at": "2026-09-08T06:12:50.640999+00:00",
+              "vendor": "openai"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "snapshot": {
+    "project_id": "test",
+    "coordinator_session_id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+    "plan_revision": 1,
+    "cursor": 10,
+    "map_hint": "include_map:true",
+    "limited": false,
+    "counts": {
+      "total": 2,
+      "by_status": {
+        "in_progress": 1,
+        "pending": 1
+      },
+      "eligible": 2,
+      "included": 2,
+      "available": 0,
+      "waiting": 1,
+      "work": {
+        "eligible": 1,
+        "included": 1
+      },
+      "sessions": {
+        "total": 3,
+        "eligible": 3,
+        "included": 3
+      }
+    },
+    "tasks": {
+      "a": {
+        "revision": 5,
+        "status": "in_progress",
+        "owner_work_id": "w_8aff479c2ab746f3b7d1f2ad0907bbd5"
+      },
+      "b": {
+        "revision": 1,
+        "status": "pending"
+      }
+    },
+    "work": {
+      "w_8aff479c2ab746f3b7d1f2ad0907bbd5": {
+        "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "location": {
+          "branch": "feature",
+          "paths": [
+            "src/α.ts"
+          ],
+          "target_branch": "main"
+        },
+        "predecessor_work_id": "w_b739839f1c2d4ea08fe31c1a9d34e7b6",
+        "revision": 1,
+        "role": "owner",
+        "session_id": "s_0b74dfdce56e426e9ab7bfe444f7d9f1",
+        "status": "in_progress",
+        "task_id": "a",
+        "updated_at": "2026-09-08T06:12:50.644386+00:00"
+      }
+    },
+    "sessions": {
+      "s_7b44bc65868f4fffb0f87e956aaa3a76": {
+        "effort": "high",
+        "external_session_id": "root",
+        "last_seen_at": "2026-09-08T06:12:50.645898+00:00",
+        "model": "new-root-model",
+        "revision": 3,
+        "runtime": "codex",
+        "vendor": "openai"
+      },
+      "s_0b74dfdce56e426e9ab7bfe444f7d9f1": {
+        "effort": "high",
+        "external_session_id": "recipient",
+        "last_seen_at": "2026-09-08T06:12:50.643593+00:00",
+        "model": "old-model",
+        "revision": 1,
+        "runtime": "codex",
+        "vendor": "openai"
+      },
+      "s_03b4c1ff51b7422ab82d25a7f707e0fd": {
+        "effort": "high",
+        "external_session_id": "child",
+        "last_seen_at": "2026-09-08T06:12:50.645115+00:00",
+        "model": "new-model",
+        "parent_session_id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+        "revision": 6,
+        "runtime": "codex",
+        "vendor": "openai"
+      }
+    },
+    "dependency_states": {
+      "a": "in_progress"
+    },
+    "blocking_path": {
+      "length": 0,
+      "blocked_count": 0,
+      "task_ids": [],
+      "blocked_task_ids": []
+    },
+    "repository": "repo",
+    "task_map": {
+      "a": {
+        "label": "Original α",
+        "depends_on": []
+      },
+      "b": {
+        "label": "Dependent",
+        "depends_on": [
+          "a"
+        ]
+      }
+    }
+  },
+  "plan": {
+    "project_id": "test",
+    "plan_revision": 1,
+    "metadata": {
+      "actor_id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+      "created_at": "2026-09-08T06:12:50.640999+00:00"
+    },
+    "task_map": {
+      "a": {
+        "label": "Original α",
+        "depends_on": []
+      },
+      "b": {
+        "label": "Dependent",
+        "depends_on": [
+          "a"
+        ]
+      }
+    }
+  },
+  "join_request": {
+    "project_id": "test",
+    "request_id": "reference-0",
+    "repository": "repo",
+    "vendor": "openai",
+    "runtime": "codex",
+    "external_session_id": "root",
+    "model": "old-model",
+    "effort": "high",
+    "parent_session_id": null
+  },
+  "join_response": {
+    "cursor": 1,
+    "map_hint": "include_map:true",
+    "plan_revision": 0,
+    "session_id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+    "snapshot": {
+      "blocking_path": {
+        "blocked_count": 0,
+        "blocked_task_ids": [],
+        "length": 0,
+        "task_ids": []
+      },
+      "coordinator_session_id": "s_7b44bc65868f4fffb0f87e956aaa3a76",
+      "counts": {
+        "available": 0,
+        "by_status": {},
+        "eligible": 0,
+        "included": 0,
+        "sessions": {
+          "eligible": 1,
+          "included": 1,
+          "total": 1
+        },
+        "total": 0,
+        "waiting": 0,
+        "work": {
+          "eligible": 0,
+          "included": 0
+        }
+      },
+      "cursor": 1,
+      "dependency_states": {},
+      "limited": false,
+      "map_hint": "include_map:true",
+      "plan_revision": 0,
+      "project_id": "test",
+      "sessions": {
+        "s_7b44bc65868f4fffb0f87e956aaa3a76": {
+          "effort": "high",
+          "external_session_id": "root",
+          "last_seen_at": "2026-09-08T06:12:50.639035+00:00",
+          "model": "old-model",
+          "revision": 1,
+          "runtime": "codex",
+          "vendor": "openai"
+        }
+      },
+      "task_map": {},
+      "tasks": {},
+      "work": {}
+    }
+  }
+}

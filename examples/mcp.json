@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "vibecheck": {
+      "command": "bash",
+      "args": [
+        "/absolute/path/to/vibecheck/scripts/run-server.sh",
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "PROJECT_BOARD_DB": "/absolute/path/to/shared-data/vibecheck.sqlite3"
+      }
+    }
+  }
+}

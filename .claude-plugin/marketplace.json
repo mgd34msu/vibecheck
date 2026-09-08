@@ -1,0 +1,19 @@
+{
+  "name": "vibecheck",
+  "description": "The vibecheck work ledger plugin for coding agents.",
+  "owner": {
+    "name": "Mike Davis",
+    "email": "mgd34msu@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "vibecheck",
+      "source": "./",
+      "description": "A passive work ledger for coding agents.",
+      "author": {
+        "name": "Mike Davis",
+        "email": "mgd34msu@gmail.com"
+      }
+    }
+  ]
+}

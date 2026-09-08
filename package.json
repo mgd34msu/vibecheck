@@ -1,0 +1,62 @@
+{
+  "name": "@mgd34msu/vibecheck",
+  "version": "1.0.0",
+  "description": "A compact MCP ledger for agent work, dependencies, sessions, and Git provenance.",
+  "type": "module",
+  "engines": {
+    "node": ">=24",
+    "bun": ">=1.3.14"
+  },
+  "bin": {
+    "vibecheck": "dist/cli.js",
+    "project-board": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "docs/protocol.md"
+  ],
+  "author": {
+    "name": "Mike Davis",
+    "email": "mgd34msu@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mgd34msu/vibecheck.git"
+  },
+  "homepage": "https://github.com/mgd34msu/vibecheck",
+  "scripts": {
+    "start": "bun src/cli.ts",
+    "build": "node node_modules/typescript/bin/tsc -p tsconfig.build.json",
+    "build:test": "node node_modules/typescript/bin/tsc -p tsconfig.test.json",
+    "typecheck": "node node_modules/typescript/bin/tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check:types": "bun scripts/check-types.ts",
+    "check:bundle": "bun scripts/check-bundle.ts",
+    "build:release": "bun scripts/build-release.ts",
+    "verify:release": "bun scripts/verify-release.ts",
+    "test:bun": "bun test tests",
+    "test:node": "bun run build:test && node --test .test-build/tests/*.test.js",
+    "verify": "bun run format:check && bun run typecheck && bun run check:types && bun run check:bundle && bun run test:bun && bun run test:node && bun run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.0.0",
+    "@modelcontextprotocol/node": "2.0.0",
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
+    "@types/bun": "1.4.2",
+    "@types/node": "26.5.0",
+    "prettier": "3.9.6",
+    "typescript": "7.0.2",
+    "typescript-compiler-api": "npm:typescript@6.0.3"
+  }
+}

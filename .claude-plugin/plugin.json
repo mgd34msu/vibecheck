@@ -1,0 +1,21 @@
+{
+  "name": "vibecheck",
+  "version": "1.0.0",
+  "description": "A passive work ledger for coding agents.",
+  "author": {
+    "name": "Mike Davis",
+    "email": "mgd34msu@gmail.com"
+  },
+  "homepage": "https://github.com/mgd34msu/vibecheck#readme",
+  "repository": "https://github.com/mgd34msu/vibecheck",
+  "mcpServers": {
+    "vibecheck": {
+      "command": "bash",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/scripts/run-server.sh",
+        "--transport",
+        "stdio"
+      ]
+    }
+  }
+}

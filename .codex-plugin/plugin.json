@@ -1,0 +1,35 @@
+{
+  "name": "vibecheck",
+  "version": "1.0.0",
+  "description": "A local MCP work ledger for coding agents to record project work, claims, and handoffs.",
+  "author": {
+    "name": "Mike Davis",
+    "email": "mgd34msu@gmail.com",
+    "url": "https://github.com/mgd34msu"
+  },
+  "homepage": "https://github.com/mgd34msu/vibecheck#readme",
+  "repository": "https://github.com/mgd34msu/vibecheck",
+  "keywords": ["mcp", "project", "ledger", "coding-agents"],
+  "skills": "./skills/",
+  "mcpServers": {
+    "vibecheck": {
+      "command": "bash",
+      "args": ["scripts/run-server.sh", "--transport", "stdio"],
+      "cwd": "."
+    }
+  },
+  "interface": {
+    "displayName": "Vibecheck",
+    "shortDescription": "A shared project work ledger for coding agents",
+    "longDescription": "Record tasks, claims, dependencies, progress, and handoffs in a local SQLite ledger that coding agents can query through MCP.",
+    "developerName": "Mike Davis",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://github.com/mgd34msu/vibecheck",
+    "defaultPrompt": [
+      "Join this project's Vibecheck ledger and show its current status.",
+      "Record this task in Vibecheck and check for conflicting claims.",
+      "Use Vibecheck to leave a handoff for the next session."
+    ]
+  }
+}
