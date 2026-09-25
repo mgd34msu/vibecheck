@@ -6,6 +6,4 @@ Use strict TypeScript throughout source, tests, and build scripts. Do not use `a
 
 Run `bun run build:release` after changing runtime source or dependencies, then `bun run verify` before handing off a change. Verification rejects a stale bundled runtime. Runtime behavior must pass under Bun and compiled JavaScript on Node. Do not add a Python runtime or build dependency.
 
-The root agent owns the plan and dependency graph in `docs/migration-plan.md`. Delegates implement bounded assigned work and do not create separate plans or graphs. All agents use Astra and announce their model, effort, and assignment.
-
-Commits use Mike Davis <mgd34msu@gmail.com> as both author and committer, with no trailers or coauthors.
+The root agent owns the plan and dependency graph in `docs/migration-plan.md`. Delegates implement bounded assigned work and do not create separate plans or graphs.

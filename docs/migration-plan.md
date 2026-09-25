@@ -39,6 +39,19 @@ flowchart LR
   T8 --> T10 --> T11 --> T12
 ```
 
+## Portable repository instructions
+
+| Task | Dependencies | Deliverable                                                                | State          |
+| ---- | ------------ | -------------------------------------------------------------------------- | -------------- |
+| T13  | T12          | Remove personal commit and model directives; preserve manifest attribution | Complete       |
+| T14  | T13          | Scan source and archives; verify Bun, Node, and native plugins             | Complete       |
+| T15  | T14          | Publish v1.0.2 and verify downloaded release assets                        | Release v1.0.2 |
+
+```mermaid
+flowchart LR
+  T12 --> T13 --> T14 --> T15
+```
+
 ## Architecture contract
 
 - ESM TypeScript targets ES2023 with NodeNext resolution. Relative imports use `.js` so emitted JavaScript runs directly. Bun runs the TypeScript sources.
