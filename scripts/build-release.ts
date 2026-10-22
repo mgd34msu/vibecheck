@@ -24,7 +24,6 @@ export const platforms: Platform[] = ["codex", "claude"];
 export const commonFiles = [
   "README.md",
   "docs/protocol.md",
-  "docs/work-activity.md",
   "docs/agent-usage.md",
   `docs/releases/v${version}.md`,
   "examples/mcp.json",
@@ -81,9 +80,9 @@ export function sha256(bytes: Uint8Array): string {
 export async function generateBundle(): Promise<Uint8Array> {
   const result = await Bun.build({
     entrypoints: [join(root, "src/cli.ts")],
-    target: "bun",
+    target: "node",
     format: "esm",
-    external: ["bun:sqlite"],
+    external: ["node:sqlite", "bun:sqlite"],
     minify: true,
     sourcemap: "none",
   });

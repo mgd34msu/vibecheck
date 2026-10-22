@@ -15,15 +15,12 @@ import type {
 } from "@modelcontextprotocol/server";
 import { originValidation, toNodeHandler } from "@modelcontextprotocol/node";
 import { z } from "zod";
-import { Board } from "./board.js";
-import { ActivityHttp, type AccessRole } from "./activity-http.js";
+import type { Board } from "./board.js";
 import { BoardError } from "./errors.js";
 import { requestSchemas } from "./schemas.js";
 import { version } from "./version.js";
 
-export interface Ledger {
-  call(tool: string, request: unknown): Promise<object>;
-}
+export type Ledger = Pick<Board, "call">;
 
 export function createServer(
   board: Ledger,
@@ -181,8 +178,6 @@ export function createServer(
 
 export interface HttpOptions {
   token: string;
-  observerToken?: string;
-  collectorToken?: string;
   host?: string;
   allowedHosts?: readonly string[];
   projects?: ReadonlySet<string>;
@@ -261,17 +256,7 @@ export function bearerGate(
 }
 
 export function createHttpApp(board: Ledger, options: HttpOptions) {
-  const managerGate = bearerGate(options.token);
-  const observerGate = options.observerToken
-    ? bearerGate(options.observerToken)
-    : undefined;
-  const collectorGate = options.collectorToken
-    ? bearerGate(options.collectorToken)
-    : undefined;
-  const activity =
-    board instanceof Board
-      ? new ActivityHttp(board, options.projects)
-      : undefined;
+  const authenticate = bearerGate(options.token);
   const host = options.host ?? "127.0.0.1";
   const allowedHosts = [
     "127.0.0.1",
@@ -328,23 +313,7 @@ export function createHttpApp(board: Ledger, options: HttpOptions) {
   });
   const validateOrigin = originValidation([]);
   const server = createHttpServer((request, response) => {
-    let role: AccessRole = "manager";
-    const authorization = request.headers.authorization;
-    const supplied =
-      typeof authorization === "string"
-        ? authorization.replace(/^Bearer /i, "")
-        : "";
-    const equal = (value: string | undefined) =>
-      value !== undefined &&
-      Buffer.byteLength(supplied) === Buffer.byteLength(value) &&
-      timingSafeEqual(Buffer.from(supplied), Buffer.from(value));
-    if (equal(options.observerToken) && observerGate) {
-      role = "observer";
-      if (!observerGate(request, response)) return;
-    } else if (equal(options.collectorToken) && collectorGate) {
-      role = "collector";
-      if (!collectorGate(request, response)) return;
-    } else if (!managerGate(request, response)) return;
+    if (!authenticate(request, response)) return;
     if (
       headerCount(request, "host") !== 1 ||
       !matchesHost(request.headers.host, allowedHosts)
@@ -355,15 +324,6 @@ export function createHttpApp(board: Ledger, options: HttpOptions) {
     }
     if (!validateOrigin(request, response)) return;
     const path = request.url?.split("?")[0];
-    if (path?.startsWith("/v1/") && activity) {
-      void activity.handle(request, response, role);
-      return;
-    }
-    if (role !== "manager") {
-      response.writeHead(403);
-      response.end();
-      return;
-    }
     if (path !== "/mcp" && path !== "/mcp/") {
       response.writeHead(404);
       response.end();
@@ -389,22 +349,13 @@ export function createHttpApp(board: Ledger, options: HttpOptions) {
     server,
     close(): Promise<void> {
       closing ??= (async () => {
-        await activity?.close();
         await handler.close();
         await Promise.all([...legacyServers].map((legacy) => legacy.close()));
-        if (server.listening) {
-          server.closeAllConnections();
+        if (server.listening)
           await new Promise<void>((resolve, reject) => {
-            server.close((error) => {
-              if (
-                error &&
-                !("code" in error && error.code === "ERR_SERVER_NOT_RUNNING")
-              )
-                reject(error);
-              else resolve();
-            });
+            server.close((error) => (error ? reject(error) : resolve()));
+            server.closeAllConnections();
           });
-        }
       })();
       return closing;
     },

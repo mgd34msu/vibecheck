@@ -21,16 +21,6 @@ export function taskMap(tasks: Iterable<TaskRecord>): TaskMap {
     Array.from(tasks, (task) => [
       task.id,
       {
-        ...(task.description === undefined
-          ? {}
-          : { description: task.description }),
-        ...(task.acceptance === undefined
-          ? {}
-          : { acceptance: task.acceptance }),
-        ...(task.priority === undefined ? {} : { priority: task.priority }),
-        ...(task.semantic_targets === undefined
-          ? {}
-          : { semantic_targets: task.semantic_targets }),
         label: task.label,
         depends_on: task.depends_on,
         ...(task.supersedes?.length ? { supersedes: task.supersedes } : {}),

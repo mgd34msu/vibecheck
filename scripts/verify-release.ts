@@ -32,8 +32,8 @@ import {
 } from "./build-release.js";
 import type { Platform } from "./build-release.js";
 
-export type Runtime = "bun";
-export const runtimes: Runtime[] = ["bun"];
+export type Runtime = "bun" | "node";
+export const runtimes: Runtime[] = ["bun", "node"];
 const toolNames = [
   "project_join",
   "plan_publish",
@@ -565,6 +565,6 @@ if (
   );
   await verifyRelease(undefined, arguments_.includes("--native"));
   process.stdout.write(
-    "Verified release checksums, bundled bytes, source and extracted plugin MCP lifecycles on Bun.\n",
+    "Verified release checksums, bundled bytes, source and extracted plugin MCP lifecycles on Bun and Node.\n",
   );
 }

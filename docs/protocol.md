@@ -118,7 +118,7 @@ The result contains `work`, `sessions`, `changes`, `matched_work_count`, `cursor
 
 ## Transport and trust
 
-`bun src/cli.ts` and `bun runtime/vibecheck.mjs` start the same server. The package declares `vibecheck` and `project-board` as CLI aliases. Bun requires version 1.3.14 or later. Node.js is no longer a supported runtime. The CLI supports `--version`, `--transport stdio|streamable-http`, `--database`, `--host`, `--port`, and repeatable `--allowed-host`. Stdio is the default. HTTP defaults to `127.0.0.1:8765` with the MCP endpoint at `/mcp`. `--allowed-host` adds accepted public Host values for a proxy deployment.
+`bun src/cli.ts` and compiled `node dist/cli.js` start the same server. The package declares `vibecheck` and `project-board` as CLI aliases. Bun requires version 1.3.14 or later; Node.js requires version 24 or later. The CLI supports `--version`, `--transport stdio|streamable-http`, `--database`, `--host`, `--port`, and repeatable `--allowed-host`. Stdio is the default. HTTP defaults to `127.0.0.1:8765` with the MCP endpoint at `/mcp`. `--allowed-host` adds accepted public Host values for a proxy deployment.
 
 `PROJECT_BOARD_DB` selects the SQLite file unless `--database` overrides it. The default uses the XDG data directory. `PROJECT_BOARD_TOKEN` is required for HTTP bearer authentication and must contain no whitespace. Optional `PROJECT_BOARD_PROJECTS` restricts both transports to a comma-separated project allowlist. Unset means unrestricted; an empty configured list is invalid.
 

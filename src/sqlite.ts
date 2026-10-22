@@ -1,4 +1,3 @@
-import { Database } from "bun:sqlite";
 export type SqlValue = string | number | bigint | null | Uint8Array;
 
 export interface SqlConnection {
@@ -9,7 +8,8 @@ export interface SqlConnection {
 }
 
 export async function openSqlite(path: string): Promise<SqlConnection> {
-  {
+  if (process.versions.bun !== undefined) {
+    const { Database } = await import("bun:sqlite");
     const database = new Database(path, { create: true, strict: true });
     return {
       exec: (sql) => database.exec(sql),
@@ -32,6 +32,16 @@ export async function openSqlite(path: string): Promise<SqlConnection> {
       close: () => database.close(),
     };
   }
+  const { DatabaseSync } = await import("node:sqlite");
+  const database = new DatabaseSync(path);
+  return {
+    exec: (sql) => database.exec(sql),
+    all: (sql, values) => database.prepare(sql).all(...values),
+    run(sql, values) {
+      database.prepare(sql).run(...values);
+    },
+    close: () => database.close(),
+  };
 }
 
 export function isSqliteBusy(error: unknown): boolean {

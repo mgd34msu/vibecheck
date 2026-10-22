@@ -5,7 +5,7 @@ description: Use the Vibecheck MCP ledger to coordinate coding work, report proj
 
 # Vibecheck
 
-Use the plugin's nine MCP tools to maintain a shared work ledger within the user's task. All tools take a nested `request` object. Store metadata and references in work records. Optional configured activity adapters store session artifacts separately; do not put credentials or large logs in task fields.
+Use the plugin's nine MCP tools to maintain a shared work ledger within the user's task. All tools take a nested `request` object. Store metadata and references, not code, credentials, transcripts, or large logs.
 
 ## Establish the session
 
@@ -42,7 +42,3 @@ Use `plan_read` with `revision` to recover complete definitions. Adding `compare
 Use `work_history` for recovery by task, session, path, branch, or commit. Follow its explicit historical pages with `after` set to the returned cursor while `has_more` is true. Keep this separate from normal current status.
 
 Treat timestamps and status as the latest report, which can be stale. Verify outcomes in the repository. Claims do not fence Git writes, and `blocking_path` counts task nodes through reported blockers rather than estimating duration.
-
-## Semantic work targets
-
-When working with Plat, task definitions and updates may include `semantic_targets` entries `{workspace_id,node_id}`, plus `description`, `acceptance`, and `priority` (`low|normal|high|urgent`). Use the exact workspace and node identities supplied by Plat. Targets express intended work and do not bind files or expand a frozen scope. Agent reports remain separate from host-observed activity. In service mode, keep `VIBECHECK_SERVICE_URL` and the project connection configured so MCP reports and the explorer use the same ledger.
