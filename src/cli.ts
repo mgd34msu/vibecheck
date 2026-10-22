@@ -241,8 +241,9 @@ export async function main(
       };
       process.once("SIGINT", stop);
       process.once("SIGTERM", stop);
-      if (options.transport === "stdio") {
+      if (options.transport === "stdio" || (http && options.managed)) {
         process.stdin.once("end", stop);
+        if (http && options.managed) process.stdin.resume();
         if (process.stdin.readableEnded) stop();
       }
     });

@@ -3,6 +3,8 @@ import test from "node:test";
 import { mkdtemp, mkdir, writeFile, appendFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join as pathJoin } from "node:path";
+import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { ActivityStore } from "../src/activity.js";
 import { createHttpApp } from "../src/server.js";
 import { RemoteLedger } from "../src/remote.js";
@@ -331,6 +333,54 @@ test("HTTP shutdown closes active observer streams on Bun", async (t) => {
   } finally {
     clearTimeout(timer);
     await stream.body?.cancel().catch(() => {});
+  }
+});
+test("managed HTTP service exits when its owner pipe closes", async (t) => {
+  const directory = await mkdtemp(pathJoin(tmpdir(), "vibecheck-owner-"));
+  const child = spawn(
+    process.execPath,
+    [
+      "src/cli.ts",
+      "--transport",
+      "streamable-http",
+      "--managed",
+      "--port",
+      "0",
+      "--database",
+      pathJoin(directory, "work.sqlite3"),
+    ],
+    {
+      stdio: ["pipe", "pipe", "pipe"],
+      env: {
+        ...process.env,
+        PROJECT_BOARD_TOKEN: "owner-test-token",
+        VIBECHECK_SERVICE_URL: undefined,
+      },
+    },
+  );
+  t.after(() => child.kill("SIGKILL"));
+  const stopped = new Promise<{
+    code: number | null;
+    signal: NodeJS.Signals | null;
+  }>((resolve) =>
+    child.once("exit", (code, signal) => resolve({ code, signal })),
+  );
+  await once(child.stdout, "data", { signal: AbortSignal.timeout(5000) });
+  child.stdin.end();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const result = await Promise.race([
+      stopped,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error("Managed service survived owner EOF")),
+          2000,
+        );
+      }),
+    ]);
+    assert.deepEqual(result, { code: 0, signal: null });
+  } finally {
+    clearTimeout(timer);
   }
 });
 test("Codex collector follows complete records, filters workspace and reasoning, and resumes without duplicates", async (t) => {
