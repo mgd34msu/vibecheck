@@ -29,6 +29,8 @@ export const shortTextSchema = z
   .refine((value) => Array.from(value).length <= 500, {
     message: "String should have at most 500 characters",
   });
+// Preserve request casing for retry digests created by earlier releases.
+// Commit values are normalized when work is written, after hashing the request.
 export const commitSchema = z
   .string()
   .regex(/^(?:[a-fA-F0-9]{40}|[a-fA-F0-9]{64})$(?![\s\S])/);
@@ -111,7 +113,7 @@ export function normalizeLocation(location: Location = {}): LocationRecord {
     checkout: location.checkout ?? null,
     branch: location.branch ?? null,
     target_branch: location.target_branch ?? null,
-    base_commit: location.base_commit ?? null,
+    base_commit: location.base_commit?.toLowerCase() ?? null,
     paths: location.paths ?? [],
   };
 }

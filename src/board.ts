@@ -72,11 +72,30 @@ function parseRequest<T>(schema: z.ZodType<T>, argumentsValue: unknown): T {
   }
 }
 
+export const DEFAULT_REQUEST_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+
+export interface BoardOptions {
+  /** Keep retry receipts for this many milliseconds; null disables cleanup. */
+  requestRetentionMs?: number | null;
+}
+
 export class Board {
   readonly database: Database;
+  private readonly requestRetentionMs: number | null;
 
-  constructor(databasePath: string) {
+  constructor(databasePath: string, options: BoardOptions = {}) {
     this.database = new Database(databasePath);
+    this.requestRetentionMs = z
+      .number()
+      .int()
+      .positive()
+      .max(8_640_000_000_000_000)
+      .nullable()
+      .parse(
+        options.requestRetentionMs === undefined
+          ? DEFAULT_REQUEST_RETENTION_MS
+          : options.requestRetentionMs,
+      );
   }
 
   call(
@@ -239,6 +258,12 @@ export class Board {
         return responseSchema.parse(cached.response);
       }
       const result = operation(tx);
+      if (this.requestRetentionMs !== null) {
+        const cutoff = new Date(Date.parse(tx.now) - this.requestRetentionMs)
+          .toISOString()
+          .replace(/\.(\d{3})Z$/, ".$1000+00:00");
+        tx.pruneRequests(cutoff);
+      }
       tx.putRequest(
         actorKey,
         request.request_id,

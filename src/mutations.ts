@@ -577,7 +577,9 @@ function mergeLocation(old: LocationRecord, patch: Location): LocationRecord {
         ? old.target_branch
         : patch.target_branch,
     base_commit:
-      patch.base_commit === undefined ? old.base_commit : patch.base_commit,
+      patch.base_commit === undefined
+        ? old.base_commit
+        : (patch.base_commit?.toLowerCase() ?? null),
     paths: patch.paths === undefined ? old.paths : patch.paths,
   };
 }
@@ -629,10 +631,15 @@ export function workUpdate(tx: Transaction, request: WorkUpdate) {
         ...updated,
         status,
         ...(change.blocker === undefined ? {} : { blocker: change.blocker }),
-        ...(change.commit === undefined ? {} : { commit: change.commit }),
+        ...(change.commit === undefined
+          ? {}
+          : { commit: change.commit?.toLowerCase() ?? null }),
         ...(change.integration_commit === undefined
           ? {}
-          : { integration_commit: change.integration_commit }),
+          : {
+              integration_commit:
+                change.integration_commit?.toLowerCase() ?? null,
+            }),
       };
       if (change.location !== undefined) {
         updated.location =
@@ -642,7 +649,7 @@ export function workUpdate(tx: Transaction, request: WorkUpdate) {
       }
       if (
         change.integration_commit === undefined &&
-        (updated.commit !== old.commit ||
+        (updated.commit?.toLowerCase() !== old.commit?.toLowerCase() ||
           updated.location.target_branch !== old.location.target_branch ||
           (updated.location.repository ?? project.repository) !==
             (old.location.repository ?? project.repository))

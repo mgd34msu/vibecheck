@@ -315,6 +315,8 @@ test("legacy tasks without supersedes need no plan snapshots or migration", asyn
   await l.publish(session, 0, [{ id: "a", label: "Original" }]);
   await l.publish(session, 1, [{ id: "a", label: "Later" }]);
   await l.board.database.write(projectIdSchema.parse("p"), (tx) => {
+    // Model history written before the database enforced immutability.
+    tx.execute("DROP TRIGGER changes_immutable_update", []);
     tx.execute(
       "UPDATE records SET body = json_remove(body, '$.supersedes') WHERE project_id = ? AND kind = 'task'",
       [tx.projectId],
@@ -443,6 +445,8 @@ test("missing publication history reports not_found for both endpoints", async (
   await l.publish(session, 0, [{ id: "a", label: "A" }]);
   await l.publish(session, 1, [{ id: "a", label: "Later" }]);
   await l.board.database.write(projectIdSchema.parse("p"), (tx) => {
+    // Model a database whose publication history was already damaged.
+    tx.execute("DROP TRIGGER changes_immutable_delete", []);
     tx.execute(
       `DELETE FROM changes WHERE project_id = ? AND EXISTS (
       SELECT 1 FROM json_each(changes.body) AS item

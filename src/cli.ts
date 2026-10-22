@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 import { parseArgs as parseNodeArgs } from "node:util";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { z } from "zod";
-import { Board } from "./board.js";
+import { Board, DEFAULT_REQUEST_RETENTION_MS } from "./board.js";
 import { identifierSchema } from "./schemas.js";
 import { createHttpApp, createServer } from "./server.js";
 import { version } from "./version.js";
@@ -70,6 +70,7 @@ const configurationSchema = z
   });
 export type CliOptions = z.infer<typeof configurationSchema> & {
   projects: ReadonlySet<string> | undefined;
+  requestRetentionMs: number | null;
 };
 
 export function parseArgs(
@@ -119,10 +120,27 @@ export function parseArgs(
       );
     projects = new Set(identifiers.data);
   }
+  const retentionDays = environment.PROJECT_BOARD_REQUEST_RETENTION_DAYS;
+  let requestRetentionMs: number | null = DEFAULT_REQUEST_RETENTION_MS;
+  if (retentionDays === "off") requestRetentionMs = null;
+  else if (retentionDays !== undefined) {
+    const days = z
+      .string()
+      .regex(/^\d+$/u)
+      .transform(Number)
+      .pipe(z.number().int().min(1).max(100_000_000))
+      .safeParse(retentionDays);
+    if (!days.success)
+      throw new CliUsageError(
+        "PROJECT_BOARD_REQUEST_RETENTION_DAYS must be a positive whole number of at most 100000000, or off",
+      );
+    requestRetentionMs = days.data * 24 * 60 * 60 * 1000;
+  }
   return {
     ...parsed.data,
     database: expandHome(parsed.data.database),
     projects,
+    requestRetentionMs,
   };
 }
 
@@ -139,6 +157,7 @@ Usage: vibecheck [options]
 
 HTTP requires PROJECT_BOARD_TOKEN. PROJECT_BOARD_DB sets the default database.
 PROJECT_BOARD_PROJECTS restricts access to comma-separated project IDs.
+PROJECT_BOARD_REQUEST_RETENTION_DAYS sets retry retention (default: 30; off disables cleanup).
 `;
 
 export async function main(
@@ -153,7 +172,9 @@ export async function main(
     return;
   }
   const options = parseArgs(arguments_);
-  const board = new Board(options.database);
+  const board = new Board(options.database, {
+    requestRetentionMs: options.requestRetentionMs,
+  });
   const http =
     options.transport === "stdio"
       ? undefined

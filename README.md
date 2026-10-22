@@ -119,6 +119,8 @@ Connect an MCP client to `http://127.0.0.1:8765/mcp` with the header `Authorizat
 
 Keep the database outside plugin caches. The default XDG data path and any custom `PROJECT_BOARD_DB` path remain under your control. Plugin replacement or removal does not delete ledger data. The board does not create backups.
 
+Successful new mutations remove retry receipts older than 30 days for their project. Set `PROJECT_BOARD_REQUEST_RETENTION_DAYS` to a positive whole number of days, or `off` to keep receipts indefinitely. After a receipt is removed, its request ID has no saved retry result; use a fresh ID for each new operation. Work records and history are retained, and SQLite rejects updates or deletes against history.
+
 Pinned marketplace installations stay tied to the selected release. Select the desired release when upgrading. Remove the Claude plugin with `claude plugin uninstall vibecheck@vibecheck`; remove the Codex plugin with `codex plugin remove vibecheck@vibecheck`.
 
 ## Tools
@@ -324,7 +326,7 @@ bun run verify
 
 The verification command checks formatting, strict types, forbidden assertions, and bundled runtime freshness. It runs the behavior tests under Bun and compiled JavaScript under Node.js, then builds the package. Node.js 24 or later is required for the Node tests. After changing runtime source or dependencies, run `bun run build:release` to refresh the committed bundle before verification.
 
-The verification suite runs 127 tests on Bun and compiled JavaScript on Node.js. CI checks Node.js 24 and 26. A frozen 995-case validation corpus and imported SQLite fixtures check compatibility with the Python implementation, including historical records and saved retry responses. The TypeScript compiler is version 7.0.2. A development-only TypeScript 6 compiler API parses source for the forbidden-type checks.
+The verification suite runs 137 tests on Bun and compiled JavaScript on Node.js. CI checks Node.js 24 and 26. A frozen 995-case validation corpus and imported SQLite fixtures check compatibility with the Python implementation and Vibecheck 1.0.2, including historical records and saved retry responses. The TypeScript compiler is version 7.0.2. A development-only TypeScript 6 compiler API parses source for the forbidden-type checks.
 
 The implementation derives domain types from input schemas. Boundary validation rejects invalid external data before business logic runs. Authored TypeScript uses no `any`, type assertions, non-null assertions, or compiler suppression comments. SQLite uses the runtime's built-in `bun:sqlite` or `node:sqlite` adapter.
 

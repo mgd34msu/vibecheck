@@ -784,9 +784,10 @@ export function workHistory(
   }
   if (request.commit != null) {
     conditions.push(
-      "(json_extract(document, '$.commit') = ? OR json_extract(document, '$.integration_commit') = ? OR json_extract(document, '$.location.base_commit') = ?)",
+      "(lower(json_extract(document, '$.commit')) = ? OR lower(json_extract(document, '$.integration_commit')) = ? OR lower(json_extract(document, '$.location.base_commit')) = ?)",
     );
-    values.push(request.commit, request.commit, request.commit);
+    const commit = request.commit.toLowerCase();
+    values.push(commit, commit, commit);
   }
   const matched = tx.queryRows(
     z.object({ id: workIdSchema }),

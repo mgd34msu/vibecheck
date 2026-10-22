@@ -51,6 +51,10 @@ export function createServer(
         isError: false,
       };
     } catch (error) {
+      if (!(error instanceof BoardError))
+        process.stderr.write(
+          `vibecheck: tool call failed: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`,
+        );
       const result = {
         error:
           error instanceof BoardError

@@ -7,6 +7,7 @@ import { BoardError } from "./errors.js";
 import {
   cursorSchema,
   jsonValueSchema,
+  normalizeLocation,
   projectRecordSchema,
   recordChangeSchema,
   sessionRecordSchema,
@@ -65,6 +66,13 @@ const schemaStatements = [
     digest TEXT NOT NULL, response TEXT NOT NULL, created_at TEXT NOT NULL,
     PRIMARY KEY(project_id, actor_id, request_id)
   )`,
+  "CREATE INDEX IF NOT EXISTS requests_created ON requests(project_id, created_at)",
+  ...["UPDATE", "DELETE"].map(
+    (event) =>
+      `CREATE TRIGGER IF NOT EXISTS changes_immutable_${event.toLowerCase()}
+       BEFORE ${event} ON changes
+       BEGIN SELECT RAISE(ABORT, 'history is immutable'); END`,
+  ),
 ];
 const bodyRowSchema = z.object({ body: z.string() });
 const cachedRowSchema = z.object({ digest: z.string(), response: z.string() });
@@ -161,10 +169,15 @@ export class Transaction {
   }
 
   private metadata(
+    kind: RecordChange["kind"],
+    id: string,
     previous: { revision: number; created_at: string } | undefined,
   ) {
     return {
-      revision: previous === undefined ? 1 : previous.revision + 1,
+      // Multiple writes become one final document in the transaction's batch.
+      revision:
+        this.changes.get(`${kind}:${id}`)?.record.revision ??
+        (previous?.revision ?? 0) + 1,
       created_at: previous === undefined ? this.now : previous.created_at,
       updated_at: this.now,
     };
@@ -201,7 +214,7 @@ export class Transaction {
     const record = projectRecordSchema.parse({
       ...fields,
       id,
-      ...this.metadata(this.findProject(id)),
+      ...this.metadata("project", id, this.findProject(id)),
     });
     this.store({ kind: "project", id, record });
     return record;
@@ -219,7 +232,7 @@ export class Transaction {
     const record = sessionRecordSchema.parse({
       ...fields,
       id,
-      ...this.metadata(this.findSession(id)),
+      ...this.metadata("session", id, this.findSession(id)),
     });
     this.store({ kind: "session", id, record });
     return record;
@@ -237,7 +250,7 @@ export class Transaction {
     const record = taskRecordSchema.parse({
       ...fields,
       id,
-      ...this.metadata(this.findTask(id)),
+      ...this.metadata("task", id, this.findTask(id)),
     });
     this.store({ kind: "task", id, record });
     return record;
@@ -254,8 +267,11 @@ export class Transaction {
   putWork(id: WorkId, fields: WorkFields): WorkRecord {
     const record = workRecordSchema.parse({
       ...fields,
+      commit: fields.commit?.toLowerCase() ?? null,
+      integration_commit: fields.integration_commit?.toLowerCase() ?? null,
+      location: normalizeLocation(fields.location),
       id,
-      ...this.metadata(this.findWork(id)),
+      ...this.metadata("work", id, this.findWork(id)),
     });
     this.store({ kind: "work", id, record });
     return record;
@@ -339,6 +355,13 @@ export class Transaction {
         };
   }
 
+  pruneRequests(before: string): void {
+    this.execute(
+      "DELETE FROM requests WHERE project_id = ? AND created_at < ?",
+      [this.projectId, before],
+    );
+  }
+
   putRequest(
     actorKey: string,
     requestId: string,
@@ -350,6 +373,14 @@ export class Transaction {
        VALUES(?, ?, ?, ?, ?, ?)`,
       [this.projectId, actorKey, requestId, digest, encode(response), this.now],
     );
+  }
+}
+
+function rollback(connection: SqlConnection): void {
+  try {
+    connection.exec("ROLLBACK");
+  } catch {
+    // SQLite can end a transaction itself; retain the original failure.
   }
 }
 
@@ -406,7 +437,7 @@ export class Database {
         started = false;
         return;
       } catch (error) {
-        if (started && connection !== undefined) connection.exec("ROLLBACK");
+        if (started && connection !== undefined) rollback(connection);
         if (!isSqliteBusy(error) || performance.now() >= deadline) throw error;
       } finally {
         connection?.close();
@@ -458,7 +489,7 @@ export class Database {
         started = false;
         return result;
       } catch (error) {
-        if (started && connection !== undefined) connection.exec("ROLLBACK");
+        if (started && connection !== undefined) rollback(connection);
         if (started || !isSqliteBusy(error) || performance.now() >= deadline)
           throw error;
       } finally {

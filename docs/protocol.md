@@ -8,7 +8,13 @@ Every request includes `project_id`. Mutations also include `request_id`; all mu
 
 Server-owned document metadata includes `id`, `revision`, `created_at`, and `updated_at`. A revision describes one document. `plan_revision` describes the plan definition. A cursor describes the project's change stream. These values are not interchangeable.
 
+A document advances its revision once per transaction, even when that transaction changes it more than once. Its change batch records the final document. SQLite rejects updates and deletes against stored change batches; initialization adds these guards to existing schema-v1 databases without rewriting history.
+
 A successful mutation returns its result, a cursor, the current `plan_revision`, and `map_hint:"include_map:true"`. Repeating identical input with the same request ID returns the cached result without another write. Reusing that ID with different input conflicts. Join retries are scoped by vendor, runtime, and external session ID; other mutation retries are scoped by board session. Failed calls roll back, including all entries in a batch update.
+
+Retry receipts are retained for 30 days by default. A successful new mutation prunes older receipts from its own project in the same transaction. Cached retries, reads, and failed mutations do not prune receipts. A saved receipt remains usable until pruned; after pruning, the same request ID is processed as a new request and remains subject to normal revision checks. Set `PROJECT_BOARD_REQUEST_RETENTION_DAYS` to a positive whole number of days or `off` to disable cleanup. Programmatic callers can pass `requestRetentionMs` in the `Board` constructor options, with `null` disabling cleanup. Cleanup never removes work records or change history.
+
+Commit SHAs accept either case and are stored in lowercase when work is written. Commit history selectors ignore case, including in older records and history. Request hashes preserve the supplied casing so existing saved receipts continue to replay after an upgrade; retry the original request exactly. Changing only a source SHA's casing preserves integration proof.
 
 MCP marks failed tool results with `isError: true`. Board errors include text JSON and a structured `error` with `code`, `message`, and optional `details`. Board error codes are `invalid`, `not_found`, `conflict`, and `forbidden`. SDK-level validation may return a text-only error with no structured content. Unexpected backend errors return a structured `internal` error with the message `Internal server error.` and no exception details.
 

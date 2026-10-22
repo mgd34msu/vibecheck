@@ -365,6 +365,22 @@ test("CLI defaults and environment match the database and project contract", () 
   assert.equal(options.host, "127.0.0.1");
   assert.equal(options.port, 8765);
   assert.equal(options.projects, undefined);
+  assert.equal(options.requestRetentionMs, 30 * 24 * 60 * 60 * 1000);
+  assert.equal(
+    parseArgs([], { PROJECT_BOARD_REQUEST_RETENTION_DAYS: "7" })
+      .requestRetentionMs,
+    7 * 24 * 60 * 60 * 1000,
+  );
+  assert.equal(
+    parseArgs([], { PROJECT_BOARD_REQUEST_RETENTION_DAYS: "off" })
+      .requestRetentionMs,
+    null,
+  );
+  for (const days of ["", "0", "-1", "1.5", "Infinity", "100000001"])
+    assert.throws(
+      () => parseArgs([], { PROJECT_BOARD_REQUEST_RETENTION_DAYS: days }),
+      CliUsageError,
+    );
   assert.equal(
     defaultDatabase({ PROJECT_BOARD_DB: "/tmp/override.db" }),
     "/tmp/override.db",
