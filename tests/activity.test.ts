@@ -173,6 +173,7 @@ test("work completion does not create session lifecycle and artifacts retain the
   const artifact = {
     id: "diff-1",
     session_id: session,
+    work_id: claimed.work.id,
     kind: "diff",
     title: "Versioned diff",
     text: "-old\n+new",
@@ -181,6 +182,21 @@ test("work completion does not create session lifecycle and artifacts retain the
   };
   await activity.artifact(PROJECT, artifact);
   await activity.artifact(PROJECT, artifact);
+  await activity.artifact(PROJECT, { ...artifact, id: "diff-2" });
+  const first = await activity.artifacts(PROJECT, {
+    work_id: claimed.work.id,
+    limit: 1,
+  });
+  assert.equal(first.has_more, true);
+  assert.equal(first.artifacts[0]?.id, "diff-1");
+  assert.equal("text" in (first.artifacts[0] ?? {}), false);
+  const second = await activity.artifacts(PROJECT, {
+    work_id: claimed.work.id,
+    after: first.cursor,
+    limit: 1,
+  });
+  assert.equal(second.has_more, false);
+  assert.equal(second.artifacts[0]?.id, "diff-2");
   await assert.rejects(
     activity.artifact(PROJECT, { ...artifact, text: "Changed" }),
     /immutable/,

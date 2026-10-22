@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import { workIdSchema, sessionIdSchema } from "./schemas.js";
 import type { Board } from "./board.js";
 import { encode, type Transaction } from "./db.js";
 import { BoardError } from "./errors.js";
@@ -254,7 +255,7 @@ export class ActivityStore {
       const files = tx
         .queryRows(
           bodyRow,
-          "SELECT body FROM activity_events WHERE project_id=? AND json_array_length(body,'$.paths')>0 ORDER BY seq DESC LIMIT 10000",
+          "SELECT body FROM activity_events WHERE project_id=? AND json_array_length(body,'$.paths')>0 ORDER BY seq DESC LIMIT 10001",
           [tx.projectId],
         )
         .map((row) => activityEventSchema.parse(JSON.parse(row.body)))
@@ -272,8 +273,8 @@ export class ActivityStore {
         sources,
         worktrees,
         activity,
-        files,
-        files_limited: files.length === 10000,
+        files: files.slice(0, 10000),
+        files_limited: files.length > 10000,
         ...(retention ? { history_retention: JSON.parse(retention.body) } : {}),
       };
     });
@@ -378,6 +379,47 @@ export class ActivityStore {
     return this.board.database.read(this.project(project), (tx) =>
       rowBody(tx, artifactSchema, "activity_artifacts", id),
     );
+  }
+  artifacts(project: string, input: unknown) {
+    const request = z
+      .strictObject({
+        work_id: workIdSchema.optional(),
+        session_id: sessionIdSchema.optional(),
+        after: z.string().default(""),
+        limit: z.number().int().min(1).max(100).default(50),
+      })
+      .parse(input);
+    return this.board.database.read(this.project(project), (tx) => {
+      tx.getProject(tx.projectId);
+      if (request.work_id) tx.getWork(request.work_id);
+      if (request.session_id) tx.getSession(request.session_id);
+      const rows = tx.queryRows(
+        bodyRow,
+        `SELECT body FROM activity_artifacts WHERE project_id=? AND id>?
+        AND (? IS NULL OR session_id=?) AND (? IS NULL OR json_extract(body,'$.work_id')=?)
+        ORDER BY id LIMIT ?`,
+        [
+          tx.projectId,
+          request.after,
+          request.session_id ?? null,
+          request.session_id ?? null,
+          request.work_id ?? null,
+          request.work_id ?? null,
+          request.limit + 1,
+        ],
+      );
+      const artifacts = rows.slice(0, request.limit).map((row) => {
+        const { text: _text, ...metadata } = artifactSchema.parse(
+          JSON.parse(row.body),
+        );
+        return metadata;
+      });
+      return {
+        artifacts,
+        cursor: artifacts.at(-1)?.id ?? request.after,
+        has_more: rows.length > request.limit,
+      };
+    });
   }
   checkpoint(project: string, id: string) {
     return this.board.database.read(

@@ -114,6 +114,22 @@ export class ActivityHttp {
           );
           return;
         }
+        if (route === "artifacts") {
+          send(
+            200,
+            await this.store.artifacts(project, {
+              ...(url.searchParams.has("session_id")
+                ? { session_id: url.searchParams.get("session_id") }
+                : {}),
+              ...(url.searchParams.has("work_id")
+                ? { work_id: url.searchParams.get("work_id") }
+                : {}),
+              after: url.searchParams.get("after") ?? "",
+              limit: Number(url.searchParams.get("limit") ?? 50),
+            }),
+          );
+          return;
+        }
         if (route === "stream") {
           response.writeHead(200, {
             "Content-Type": "text/event-stream",
