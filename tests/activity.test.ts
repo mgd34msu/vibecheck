@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mkdtemp, mkdir, writeFile, appendFile } from "node:fs/promises";
+import { mkdtemp, mkdir, writeFile, appendFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join as pathJoin } from "node:path";
 import { spawn } from "node:child_process";
@@ -419,7 +419,11 @@ test("Codex collector follows complete records, filters workspace and reasoning,
   const collector = new CodexCollector(activity, PROJECT, tree, directory);
   await collector.poll();
   const initial = await activity.events(PROJECT, {});
-  assert.equal(initial.events.length, 2);
+  assert.equal(
+    initial.events.length,
+    2,
+    JSON.stringify((await activity.snapshot(PROJECT)).sources),
+  );
   assert.equal(JSON.stringify(initial).includes("PRIVATE"), false);
   assert.equal(JSON.stringify(initial).includes("DO NOT EXPOSE"), false);
   await appendFile(
@@ -439,4 +443,155 @@ test("Codex collector follows complete records, filters workspace and reasoning,
   await next.close();
   assert.equal((await activity.events(PROJECT, {})).events.length, 3);
   assert.ok(path);
+});
+
+for (const existing of [false, true])
+  test(`Codex collection prioritizes current activity and backfills ${existing ? "an existing" : "a new"} checkpoint`, async (t) => {
+    const { board, activity } = await setup(t);
+    const directory = await mkdtemp(
+      pathJoin(tmpdir(), "vibecheck-codex-history-"),
+    );
+    t.after(() => rm(directory, { recursive: true, force: true }));
+    const root = pathJoin(directory, "project");
+    await mkdir(root);
+    const tree = { id: "history-tree", repository: "repo", root };
+    await activity.worktree(PROJECT, tree);
+    const row = (timestamp: string, type: string, payload: object) =>
+      JSON.stringify({ timestamp, type, payload }) + "\n";
+    const old = (type: string, payload: object) =>
+      row("2026-10-16T12:00:00Z", type, payload);
+    const live = (type: string, payload: object) =>
+      row("2026-10-22T12:00:00Z", type, payload);
+    const file = pathJoin(directory, "session.jsonl");
+    await writeFile(
+      file,
+      old("session_meta", { id: "long-lived", cwd: root }) +
+        old("turn_context", { model: "old-model" }) +
+        old("event_msg", { type: "task_complete" }) +
+        Array.from({ length: 20 }, () =>
+          old("response_item", {
+            type: "reasoning",
+            summary: "PRIVATE".repeat(70_000),
+          }),
+        ).join("") +
+        live("turn_context", { model: "current-model", effort: "high" }) +
+        live("event_msg", { type: "task_started", turn_id: "current-turn" }),
+    );
+    if (existing) {
+      const complete = await import("node:fs/promises").then((fs) =>
+        fs.readFile(file, "utf8"),
+      );
+      await writeFile(
+        file,
+        old("session_meta", { id: "long-lived", cwd: root }) +
+          old("turn_context", { model: "old-model" }) +
+          old("event_msg", { type: "task_complete" }),
+      );
+      const prior = new CodexCollector(activity, PROJECT, tree, directory);
+      await prior.poll();
+      await prior.close();
+      await writeFile(file, complete);
+    }
+    const collector = new CodexCollector(activity, PROJECT, tree, directory);
+    await collector.poll();
+    const initial = await activity.snapshot(PROJECT);
+    assert.equal(
+      initial.activity.find((a) => a.run_id === "current-turn")?.state,
+      "running",
+    );
+    assert.ok(
+      initial.sources
+        .find((s) => s.id === "codex")
+        ?.detail?.includes("background"),
+    );
+    assert.equal(
+      Object.values(initial.sessions).find(
+        (s) => s.external_session_id === "long-lived",
+      )?.model,
+      "current-model",
+    );
+    await collector.close();
+    const resumed = new CodexCollector(
+      new ActivityStore(board),
+      PROJECT,
+      tree,
+      directory,
+    );
+    await appendFile(
+      file,
+      row("2026-10-22T12:00:01Z", "response_item", {
+        type: "message",
+        role: "assistant",
+        phase: "commentary",
+        content: [{ text: "Current public activity" }],
+      }),
+    );
+    await resumed.poll();
+    assert.ok(
+      (await activity.events(PROJECT, { limit: 500 })).events.some(
+        (e) => e.summary === "Current public activity",
+      ),
+    );
+    for (let i = 0; i < 8; i++) await resumed.poll();
+    await resumed.close();
+    const final = await activity.snapshot(PROJECT);
+    const events = (await activity.events(PROJECT, { limit: 500 })).events;
+    assert.equal(events.length, 3); // Old completion, current start and public message, each once.
+    assert.equal(JSON.stringify(events).includes("PRIVATE"), false);
+    assert.equal(
+      final.activity.find((a) => a.run_id === "current-turn")?.state,
+      "running",
+    );
+    assert.equal(
+      Object.values(final.sessions).find(
+        (s) => s.external_session_id === "long-lived",
+      )?.model,
+      "current-model",
+    );
+    assert.equal(
+      final.sources.find((s) => s.id === "codex")?.status,
+      "connected",
+    );
+    assert.ok(
+      !final.sources
+        .find((s) => s.id === "codex")
+        ?.detail?.includes("background"),
+    );
+  });
+
+test("Codex records larger than a chunk are imported without exposing private context", async (t) => {
+  const { activity } = await setup(t);
+  const directory = await mkdtemp(
+    pathJoin(tmpdir(), "vibecheck-codex-large-record-"),
+  );
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const root = pathJoin(directory, "project");
+  await mkdir(root);
+  const tree = { id: "large-tree", repository: "repo", root };
+  await activity.worktree(PROJECT, tree);
+  const row = (type: string, payload: object) =>
+    JSON.stringify({ timestamp: "2026-10-22T12:00:00Z", type, payload }) + "\n";
+  await writeFile(
+    pathJoin(directory, "session.jsonl"),
+    row("session_meta", { id: "large-session", cwd: root }) +
+      row("response_item", {
+        type: "message",
+        role: "developer",
+        content: [{ text: "PRIVATE".repeat(500_000) }],
+      }) +
+      row("event_msg", { type: "task_started" }),
+  );
+  const collector = new CodexCollector(activity, PROJECT, tree, directory);
+  await collector.poll();
+  await collector.poll();
+  await collector.close();
+  const events = (await activity.events(PROJECT, {})).events;
+  assert.equal(events.length, 1);
+  assert.equal(events[0]?.kind, "turn_started");
+  assert.equal(JSON.stringify(events).includes("PRIVATE"), false);
+  assert.equal(
+    (await activity.snapshot(PROJECT)).sources.find((s) => s.id === "codex")
+      ?.status,
+    "connected",
+  );
 });

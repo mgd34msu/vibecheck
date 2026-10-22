@@ -17,7 +17,12 @@ const checkpointSchema = z.object({
   session_id: sessionIdSchema,
   external_id: z.string(),
   model: z.string(),
+  backfill_offset: z.number().int().nonnegative().optional(),
+  backfill_end: z.number().int().nonnegative().optional(),
 });
+type Checkpoint = z.infer<typeof checkpointSchema>;
+const CHUNK_BYTES = 2_000_000;
+const MAX_RECORD_BYTES = 64_000_000;
 const short = (value: unknown, limit = 4000) =>
   typeof value === "string" ? value.slice(0, limit) : "";
 const digest = (value: string) =>
@@ -39,6 +44,7 @@ export class CodexCollector {
   private timer: ReturnType<typeof setInterval> | undefined;
   private running: Promise<void> | undefined;
   private stopped = false;
+  private registered = false;
   readonly directory: string;
   constructor(
     readonly store: ActivityStore,
@@ -89,19 +95,31 @@ export class CodexCollector {
   }
   private async collect() {
     const root = await realpath(this.worktree.root);
+    if (!this.registered) {
+      await this.store.source(this.project, {
+        id: "codex",
+        name: "Codex local sessions",
+        capabilities: ["identity", "lifecycle", "files", "messages", "tools"],
+        status: "connected",
+        detail: "Checking local session records.",
+      });
+      this.registered = true;
+    }
     const files = await sessionFiles(this.directory);
-    await this.store.source(this.project, {
-      id: "codex",
-      name: "Codex local sessions",
-      capabilities: ["identity", "lifecycle", "files", "messages", "tools"],
-      status: files.length ? "connected" : "error",
-      ...(!files.length
-        ? { detail: "No local Codex session records are available." }
-        : {}),
-    });
+    const errors: string[] = [];
+    let matched = 0,
+      backfilling = false;
     for (const file of files) {
       if (this.stopped) return;
-      const handle = await open(file, "r");
+      const handle = await open(file, "r").catch((error: unknown) => {
+        errors.push(
+          error instanceof Error
+            ? error.message
+            : "Unable to open Codex session.",
+        );
+        return null;
+      });
+      if (!handle) continue;
       try {
         const first = Buffer.alloc(262144);
         const { bytesRead } = await handle.read(first, 0, first.length, 0);
@@ -125,6 +143,7 @@ export class CodexCollector {
           continue;
         const externalId = short(header.session_id) || short(header.id);
         if (!externalId) continue;
+        matched++;
         const checkpointId = "codex:" + digest(file + firstLine).slice(0, 32);
         const saved = await this.store.checkpoint(this.project, checkpointId);
         let checkpoint = saved
@@ -154,127 +173,198 @@ export class CodexCollector {
             model: "unknown",
           };
         }
-        const bytes = Buffer.alloc(
-          Math.min(2_000_000, Math.max(0, stats.size - checkpoint.offset)),
-        );
-        if (!bytes.length) continue;
-        const read = await handle.read(
-          bytes,
-          0,
-          bytes.length,
-          checkpoint.offset,
-        );
-        const end = bytes.subarray(0, read.bytesRead).lastIndexOf(10);
-        if (end < 0) {
-          if (read.bytesRead === 2_000_000)
-            throw new Error(
-              "A Codex session record exceeds the 2 MB ingestion limit.",
+        // Follow the live tail first, while preserving a separate historical cursor.
+        // Existing checkpoints upgrade in place; replay retains byte-offset event IDs.
+        if (stats.size - checkpoint.offset > CHUNK_BYTES * 2) {
+          const seek = stats.size - CHUNK_BYTES;
+          const tail = Buffer.alloc(CHUNK_BYTES);
+          const read = await handle.read(tail, 0, tail.length, seek);
+          const newline = tail.subarray(0, read.bytesRead).indexOf(10);
+          if (newline >= 0) {
+            checkpoint.backfill_offset ??= checkpoint.offset;
+            checkpoint.backfill_end = seek + newline + 1;
+            checkpoint.offset = checkpoint.backfill_end;
+          }
+        }
+        const ingestRange = async (
+          checkpoint: Checkpoint,
+          endOffset: number,
+          isLive: boolean,
+        ) => {
+          // Most chunks stay small. A single complete record may be larger than
+          // a chunk (for example a tool output or compacted context record).
+          let budget = CHUNK_BYTES;
+          let bytes: Buffer;
+          let end: number;
+          for (;;) {
+            bytes = Buffer.alloc(
+              Math.min(budget, Math.max(0, endOffset - checkpoint.offset)),
             );
-          continue;
-        }
-        const lines = bytes
-          .subarray(0, end + 1)
-          .toString("utf8")
-          .split("\n");
-        const events: ActivityEvent[] = [];
-        for (const line of lines) {
-          if (!line) continue;
-          const offset = checkpoint.offset;
-          checkpoint.offset += Buffer.byteLength(line) + 1;
-          let record: Record<string, unknown>;
-          try {
-            record = object.parse(JSON.parse(line));
-          } catch {
-            continue;
+            if (!bytes.length) return;
+            const read = await handle.read(
+              bytes,
+              0,
+              bytes.length,
+              checkpoint.offset,
+            );
+            end = bytes.subarray(0, read.bytesRead).lastIndexOf(10);
+            if (end >= 0) break;
+            if (read.bytesRead < budget) return; // Incomplete trailing record.
+            if (budget >= MAX_RECORD_BYTES)
+              throw new Error(
+                "A Codex session record exceeds the 64 MB ingestion limit.",
+              );
+            budget = Math.min(MAX_RECORD_BYTES, budget * 2);
           }
-          const payload = object.safeParse(record.payload);
-          if (!payload.success) continue;
-          const data = payload.data;
-          if (
-            record.type === "turn_context" &&
-            typeof data.model === "string" &&
-            data.model !== checkpoint.model
-          ) {
-            await this.store.board.call("project_join", {
-              project_id: this.project,
-              request_id:
-                "codex-model:" + digest(externalId + data.model).slice(0, 32),
-              repository: this.worktree.repository,
-              vendor: "openai",
-              runtime: "codex",
-              external_session_id: externalId,
-              model: data.model,
-              ...(typeof data.effort === "string"
-                ? { effort: data.effort }
-                : {}),
-            });
-            checkpoint.model = data.model;
-          }
-          const translated = this.translate(
-            record,
-            data,
-            checkpoint.session_id,
-            externalId,
-            offset,
-            root,
-          );
-          const firstEvent = translated[0];
-          if (
-            firstEvent &&
-            ["message", "operation_started", "operation_finished"].includes(
-              firstEvent.kind,
-            )
-          ) {
-            let text = "";
-            if (firstEvent.kind === "message") {
-              const parts = z.array(z.unknown()).safeParse(data.content);
-              if (parts.success)
-                text = parts.data
-                  .flatMap((part) => {
-                    const parsed = object.safeParse(part);
-                    return parsed.success &&
-                      typeof parsed.data.text === "string"
-                      ? [parsed.data.text]
-                      : [];
-                  })
-                  .join("\n");
-            } else if (firstEvent.kind === "operation_started")
-              text = short(data.input ?? data.arguments, 1_000_000);
-            else
-              text =
-                typeof data.output === "string"
-                  ? data.output
-                  : (JSON.stringify(data.output) ?? "");
-            const id =
-              "codex-artifact:" +
-              digest(externalId + ":" + offset).slice(0, 48);
-            if (text) {
-              await this.store.artifact(this.project, {
-                id,
-                session_id: checkpoint.session_id,
-                kind: firstEvent.kind === "message" ? "message" : "tool_output",
-                title:
-                  firstEvent.kind +
-                  (text.length > 1_000_000 ? " (truncated at 1 MB)" : ""),
-                text: text.slice(0, 1_000_000),
-              });
-              firstEvent.artifact_id = id;
+          const lines = bytes
+            .subarray(0, end + 1)
+            .toString("utf8")
+            .split("\n");
+          const events: ActivityEvent[] = [];
+          for (const line of lines) {
+            if (!line) continue;
+            const offset = checkpoint.offset;
+            checkpoint.offset += Buffer.byteLength(line) + 1;
+            let record: Record<string, unknown>;
+            try {
+              record = object.parse(JSON.parse(line));
+            } catch {
+              continue;
             }
+            const payload = object.safeParse(record.payload);
+            if (!payload.success) continue;
+            const data = payload.data;
+            if (
+              isLive &&
+              record.type === "turn_context" &&
+              typeof data.model === "string" &&
+              data.model !== checkpoint.model
+            ) {
+              await this.store.board.call("project_join", {
+                project_id: this.project,
+                request_id:
+                  "codex-model:" + digest(externalId + data.model).slice(0, 32),
+                repository: this.worktree.repository,
+                vendor: "openai",
+                runtime: "codex",
+                external_session_id: externalId,
+                model: data.model,
+                ...(typeof data.effort === "string"
+                  ? { effort: data.effort }
+                  : {}),
+              });
+              checkpoint.model = data.model;
+            }
+            const translated = this.translate(
+              record,
+              data,
+              checkpoint.session_id,
+              externalId,
+              offset,
+              root,
+            );
+            const firstEvent = translated[0];
+            if (
+              firstEvent &&
+              ["message", "operation_started", "operation_finished"].includes(
+                firstEvent.kind,
+              )
+            ) {
+              let text = "";
+              if (firstEvent.kind === "message") {
+                const parts = z.array(z.unknown()).safeParse(data.content);
+                if (parts.success)
+                  text = parts.data
+                    .flatMap((part) => {
+                      const parsed = object.safeParse(part);
+                      return parsed.success &&
+                        typeof parsed.data.text === "string"
+                        ? [parsed.data.text]
+                        : [];
+                    })
+                    .join("\n");
+              } else if (firstEvent.kind === "operation_started")
+                text = short(data.input ?? data.arguments, 1_000_000);
+              else
+                text =
+                  typeof data.output === "string"
+                    ? data.output
+                    : (JSON.stringify(data.output) ?? "");
+              const id =
+                "codex-artifact:" +
+                digest(externalId + ":" + offset).slice(0, 48);
+              if (text) {
+                await this.store.artifact(this.project, {
+                  id,
+                  session_id: checkpoint.session_id,
+                  kind:
+                    firstEvent.kind === "message" ? "message" : "tool_output",
+                  title:
+                    firstEvent.kind +
+                    (text.length > 1_000_000 ? " (truncated at 1 MB)" : ""),
+                  text: text.slice(0, 1_000_000),
+                });
+                firstEvent.artifact_id = id;
+              }
+            }
+            events.push(...translated);
+            if (events.length >= 150)
+              await this.store.ingest(this.project, {
+                events: events.splice(0),
+              });
           }
-          events.push(...translated);
-          if (events.length >= 150)
-            await this.store.ingest(this.project, { events: events.splice(0) });
-        }
-        if (events.length) await this.store.ingest(this.project, { events });
+          if (events.length) await this.store.ingest(this.project, { events });
+        };
+        await ingestRange(checkpoint, stats.size, true);
+        // Commit live progress even if a historical record cannot be imported.
         await this.store.saveCheckpoint(
           this.project,
           checkpointId,
           JSON.stringify(checkpoint),
         );
+        if (
+          checkpoint.backfill_offset !== undefined &&
+          checkpoint.backfill_end !== undefined
+        ) {
+          const history = { ...checkpoint, offset: checkpoint.backfill_offset };
+          await ingestRange(history, checkpoint.backfill_end, false);
+          checkpoint.backfill_offset = history.offset;
+          if (history.offset >= checkpoint.backfill_end) {
+            delete checkpoint.backfill_offset;
+            delete checkpoint.backfill_end;
+          }
+        }
+        backfilling ||= checkpoint.backfill_offset !== undefined;
+        await this.store.saveCheckpoint(
+          this.project,
+          checkpointId,
+          JSON.stringify(checkpoint),
+        );
+      } catch (error) {
+        errors.push(
+          error instanceof Error
+            ? error.message
+            : "Codex session import failed.",
+        );
       } finally {
         await handle.close();
       }
     }
+    await this.store.source(this.project, {
+      id: "codex",
+      name: "Codex local sessions",
+      capabilities: ["identity", "lifecycle", "files", "messages", "tools"],
+      status: errors.length || !files.length ? "error" : "connected",
+      detail: errors.length
+        ? short(errors.join("; "), 500)
+        : !files.length
+          ? "No local Codex session records are available."
+          : !matched
+            ? "No Codex sessions match this workspace root."
+            : backfilling
+              ? "Collecting live activity; importing older session history in the background."
+              : `Following ${matched} Codex session${matched === 1 ? "" : "s"} for this workspace.`,
+    });
   }
   private translate(
     record: Record<string, unknown>,
