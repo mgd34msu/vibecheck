@@ -91,6 +91,6 @@ test("launcher rejects an invalid runtime override without starting the server",
     },
   );
   assert.equal(result.status, 2);
-  assert.match(result.stderr, /must be auto, bun, or node/u);
+  assert.match(result.stderr, /requires Bun/u);
   assert.equal(result.stdout, "");
 });

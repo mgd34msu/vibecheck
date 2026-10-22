@@ -2,11 +2,11 @@
 
 Vibecheck is a passive MCP work ledger for coding agents. It records a shared task plan, session ancestry, claims, work locations, blockers, and commits in SQLite. Agents report changes through nine tools. The board does not run agents, schedule work, execute Git commands, or verify that reported work happened. Optional activity services add host session observation and versioned artifacts for explorers such as Plat.
 
-This repository contains the TypeScript implementation, version 1.0.2. The Python implementation is archived separately at [mgd34msu/vibecheck-python](https://github.com/mgd34msu/vibecheck-python).
+This repository contains the TypeScript implementation, version 2.0.0 (source development). The Python implementation is archived separately at [mgd34msu/vibecheck-python](https://github.com/mgd34msu/vibecheck-python).
 
 ## Install the plugin
 
-Use a Codex or Claude Code client with native plugin support. Install Bash and either Bun 1.3.14 or later or Node.js 24 or later. The launcher supports Linux, macOS, and Windows through WSL. No Python installation is required.
+Use a Codex or Claude Code client with native plugin support. Install Bash and Bun 1.3.14 or later. The launcher supports Linux, macOS, and Windows through WSL. No Python installation is required.
 
 For Codex, install the tagged marketplace:
 
@@ -26,7 +26,7 @@ These commands select the v1.0.2 Git tag. Enable the plugin in your client and r
 
 Ask the agent to use Vibecheck to report its current work or recover an earlier plan. Supply a stable project ID and repository identity. For a standing project policy, copy [the agent instructions](docs/agent-usage.md) into your project's `AGENTS.md`.
 
-Both native plugins include the same compiled `runtime/vibecheck.mjs` bundle and skill. The launcher selects Bun when available, then Node.js. Set `VIBECHECK_RUNTIME=bun` or `VIBECHECK_RUNTIME=node` to select one explicitly. Plugin startup does not install dependencies or write inside the plugin directory.
+Both native plugins include the same compiled `runtime/vibecheck.mjs` bundle and skill. The launcher uses Bun. Node.js is no longer a supported application runtime. Plugin startup does not install dependencies or write inside the plugin directory.
 
 The bundle includes its dependency license notices in `runtime/THIRD-PARTY-NOTICES.txt`.
 
@@ -41,7 +41,7 @@ bun run build:release
 bun run verify:release
 ```
 
-The build requires Bun, `zip`, and `tar`. It refreshes the bundled runtime and writes these files in `artifacts/`:
+The build requires Bun, `zip`, and `tar`. The 2.0.0 source adds the work/activity service and uses Bun throughout; the older tagged marketplace instructions above install the historical 1.0.2 release. Use a source checkout or locally generated 2.0.0 archive for these new features. It refreshes the bundled runtime and writes these files in `artifacts/`:
 
 - `vibecheck-codex-plugin-1.0.2.zip`, the Codex plugin bundle.
 - `vibecheck-claude-plugin-1.0.2.zip`, the Claude plugin bundle.
@@ -76,13 +76,7 @@ bun src/cli.ts --version
 bun src/cli.ts
 ```
 
-Bun runs the TypeScript source directly. To run compiled JavaScript with Node.js 24 or later, build it first:
-
-```bash
-bun run build
-node dist/cli.js --version
-node dist/cli.js
-```
+Bun runs TypeScript directly and executes the bundled release runtime. No separate Node installation is required.
 
 The package name is `@mgd34msu/vibecheck`. It is not published to the npm registry. The package declares both `vibecheck` and `project-board` commands for the same CLI.
 
@@ -109,7 +103,7 @@ export PROJECT_BOARD_PROJECTS='my-project'
 bun src/cli.ts --transport streamable-http --host 127.0.0.1 --port 8765
 ```
 
-For compiled Node.js, replace `bun src/cli.ts` with `node dist/cli.js` after building.
+The same Bun runtime serves stdio and HTTP.
 
 Connect an MCP client to `http://127.0.0.1:8765/mcp` with the header `Authorization: Bearer <your token>`. The server requires a token even on loopback. For remote clients, provide HTTPS through your existing reverse proxy and pass `--allowed-host` for its public host. Keep the SQLite file on the server's local disk.
 
@@ -324,11 +318,11 @@ bun install --frozen-lockfile
 bun run verify
 ```
 
-The verification command checks formatting, strict types, forbidden assertions, and bundled runtime freshness. It runs the behavior tests under Bun and compiled JavaScript under Node.js, then builds the package. Node.js 24 or later is required for the Node tests. After changing runtime source or dependencies, run `bun run build:release` to refresh the committed bundle before verification.
+The verification command checks formatting, strict types, forbidden assertions, and bundled runtime freshness. It runs the behavior tests under Bun, then builds the package. After changing runtime source or dependencies, run `bun run build:release` to refresh the committed bundle before verification.
 
-The verification suite runs 137 tests on Bun and compiled JavaScript on Node.js. CI checks Node.js 24 and 26. A frozen 995-case validation corpus and imported SQLite fixtures check compatibility with the Python implementation and Vibecheck 1.0.2, including historical records and saved retry responses. The TypeScript compiler is version 7.0.2. A development-only TypeScript 6 compiler API parses source for the forbidden-type checks.
+The verification suite and plugin lifecycle checks run on Bun. A frozen 995-case validation corpus and imported SQLite fixtures check compatibility with the Python implementation and Vibecheck 1.0.2, including historical records and saved retry responses. The TypeScript compiler is version 7.0.2. A development-only TypeScript 6 compiler API parses source for the forbidden-type checks.
 
-The implementation derives domain types from input schemas. Boundary validation rejects invalid external data before business logic runs. Authored TypeScript uses no `any`, type assertions, non-null assertions, or compiler suppression comments. SQLite uses the runtime's built-in `bun:sqlite` or `node:sqlite` adapter.
+The implementation derives domain types from input schemas. Boundary validation rejects invalid external data before business logic runs. Authored TypeScript uses no `any`, type assertions, non-null assertions, or compiler suppression comments. SQLite uses Bun's built-in `bun:sqlite` adapter.
 
 See [release notes](docs/releases/v1.0.2.md) for the release contents and verification status.
 

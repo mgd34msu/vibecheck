@@ -81,9 +81,9 @@ export function sha256(bytes: Uint8Array): string {
 export async function generateBundle(): Promise<Uint8Array> {
   const result = await Bun.build({
     entrypoints: [join(root, "src/cli.ts")],
-    target: "node",
+    target: "bun",
     format: "esm",
-    external: ["node:sqlite", "bun:sqlite"],
+    external: ["bun:sqlite"],
     minify: true,
     sourcemap: "none",
   });

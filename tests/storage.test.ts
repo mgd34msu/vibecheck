@@ -285,7 +285,7 @@ function runChild(
 }
 
 test(
-  "Bun and Node processes share one WAL database without losing writes",
+  "Bun processes share one WAL database without losing writes",
   { timeout: 20_000 },
   async (t) => {
     const { directory, path, database } = await storage(t);
@@ -330,7 +330,7 @@ for (let index = 0; index < 100; index++) {
 `,
     );
     await Promise.all(
-      ["bun", "node", "bun", "node"].map((runtime) =>
+      ["bun", "bun", "bun", "bun"].map((runtime) =>
         runChild(t, runtime, [worker, path]),
       ),
     );

@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import { realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
