@@ -533,6 +533,14 @@ for (const existing of [false, true])
       ),
     );
     for (let i = 0; i < 8; i++) await resumed.poll();
+    await appendFile(
+      file,
+      row("2026-10-22T12:00:02Z", "turn_context", {
+        model: "alternate-model",
+      }) +
+        row("2026-10-22T12:00:03Z", "turn_context", { model: "current-model" }),
+    );
+    await resumed.poll();
     await resumed.close();
     const final = await activity.snapshot(PROJECT);
     const events = (await activity.events(PROJECT, { limit: 500 })).events;

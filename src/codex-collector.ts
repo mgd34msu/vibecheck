@@ -243,7 +243,11 @@ export class CodexCollector {
               await this.store.board.call("project_join", {
                 project_id: this.project,
                 request_id:
-                  "codex-model:" + digest(externalId + data.model).slice(0, 32),
+                  "codex-model:" +
+                  digest(externalId + ":" + offset + ":" + data.model).slice(
+                    0,
+                    32,
+                  ),
                 repository: this.worktree.repository,
                 vendor: "openai",
                 runtime: "codex",
