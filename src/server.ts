@@ -392,11 +392,19 @@ export function createHttpApp(board: Ledger, options: HttpOptions) {
         await activity?.close();
         await handler.close();
         await Promise.all([...legacyServers].map((legacy) => legacy.close()));
-        if (server.listening)
+        if (server.listening) {
+          server.closeAllConnections();
           await new Promise<void>((resolve, reject) => {
-            server.close((error) => (error ? reject(error) : resolve()));
-            server.closeAllConnections();
+            server.close((error) => {
+              if (
+                error &&
+                !("code" in error && error.code === "ERR_SERVER_NOT_RUNNING")
+              )
+                reject(error);
+              else resolve();
+            });
           });
+        }
       })();
       return closing;
     },

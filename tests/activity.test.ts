@@ -301,6 +301,38 @@ test("observer, collector and manager credentials use distinct HTTP permissions"
   });
   assert.equal(other.status, 403);
 });
+test("HTTP shutdown closes active observer streams on Bun", async (t) => {
+  const { board } = await setup(t);
+  const app = createHttpApp(board, { token: "manage" });
+  await new Promise<void>((resolve) =>
+    app.server.listen(0, "127.0.0.1", resolve),
+  );
+  t.after(() => app.close());
+  const address = app.server.address();
+  assert.ok(address && typeof address !== "string");
+  const stream = await fetch(
+    `http://127.0.0.1:${address.port}/v1/projects/${PROJECT}/stream`,
+    { headers: { Authorization: "Bearer manage" } },
+  );
+  assert.equal(stream.status, 200);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      app.close(),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () =>
+            reject(new Error("HTTP listener did not close its active stream")),
+          2000,
+        );
+      }),
+    ]);
+    assert.equal(app.server.listening, false);
+  } finally {
+    clearTimeout(timer);
+    await stream.body?.cancel().catch(() => {});
+  }
+});
 test("Codex collector follows complete records, filters workspace and reasoning, and resumes without duplicates", async (t) => {
   const { board, path, activity } = await setup(t);
   const directory = await mkdtemp(pathJoin(tmpdir(), "vibecheck-codex-"));
