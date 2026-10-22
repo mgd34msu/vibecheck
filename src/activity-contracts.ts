@@ -119,6 +119,7 @@ export const activitySchemaStatements = [
   "CREATE TABLE IF NOT EXISTS activity_events (seq INTEGER PRIMARY KEY AUTOINCREMENT, project_id TEXT NOT NULL, id TEXT NOT NULL, source_id TEXT NOT NULL, session_id TEXT NOT NULL, worktree_id TEXT NOT NULL, occurred_at TEXT NOT NULL, received_at TEXT NOT NULL, body TEXT NOT NULL, UNIQUE(project_id,id))",
   "CREATE INDEX IF NOT EXISTS activity_events_project_seq ON activity_events(project_id,seq)",
   "CREATE INDEX IF NOT EXISTS activity_events_session ON activity_events(project_id,session_id,seq)",
+  "CREATE INDEX IF NOT EXISTS activity_events_recent_files ON activity_events(project_id,julianday(occurred_at) DESC,seq DESC) WHERE json_array_length(body,'$.paths')>0",
   "CREATE TABLE IF NOT EXISTS activity_artifacts (project_id TEXT NOT NULL, id TEXT NOT NULL, session_id TEXT NOT NULL, created_at TEXT NOT NULL, body TEXT NOT NULL, PRIMARY KEY(project_id,id))",
   "CREATE TABLE IF NOT EXISTS activity_checkpoints (project_id TEXT NOT NULL, id TEXT NOT NULL, body TEXT NOT NULL, PRIMARY KEY(project_id,id))",
 ];

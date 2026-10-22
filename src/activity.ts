@@ -255,7 +255,7 @@ export class ActivityStore {
       const files = tx
         .queryRows(
           bodyRow,
-          "SELECT body FROM activity_events WHERE project_id=? AND json_array_length(body,'$.paths')>0 ORDER BY seq DESC LIMIT 10001",
+          "SELECT body FROM activity_events WHERE project_id=? AND json_array_length(body,'$.paths')>0 ORDER BY julianday(occurred_at) DESC,seq DESC LIMIT 10001",
           [tx.projectId],
         )
         .map((row) => activityEventSchema.parse(JSON.parse(row.body)))

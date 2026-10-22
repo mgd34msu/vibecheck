@@ -125,6 +125,28 @@ test("late events retain history without overwriting current lifecycle", async (
     /reset/,
   );
 });
+test("historical backfill cannot evict current files from the bounded snapshot", async (t) => {
+  const { activity, event } = await setup(t);
+  await activity.ingest(PROJECT, {
+    events: [
+      { ...event, id: "live-file", occurred_at: "2026-10-22T10:00:00Z" },
+    ],
+  });
+  for (let start = 0; start < 10_000; start += 200) {
+    await activity.ingest(PROJECT, {
+      events: Array.from({ length: 200 }, (_, i) => ({
+        ...event,
+        id: `old-${start + i}`,
+      })),
+    });
+  }
+  const snapshot = await activity.snapshot(PROJECT);
+  assert.equal(snapshot.files_limited, true);
+  assert.equal(snapshot.files.length, 10_000);
+  assert.equal(snapshot.files[0]?.id, "live-file");
+  assert.equal(snapshot.activity[0]?.updated_at, "2026-10-22T10:00:00Z");
+});
+
 test("paths, worktree identities and project boundaries are enforced", async (t) => {
   const { activity, event } = await setup(t);
   await assert.rejects(
