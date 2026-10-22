@@ -177,6 +177,12 @@ export function projectJoin(tx: Transaction, request: ProjectJoin) {
   tx.actorId = sessionId;
   tx.putSession(sessionId, {
     ...session,
+    ...(request.actor_kind === undefined
+      ? {}
+      : { actor_kind: request.actor_kind }),
+    ...(request.display_name === undefined
+      ? {}
+      : { display_name: request.display_name }),
     vendor: request.vendor,
     runtime: request.runtime,
     external_session_id: request.external_session_id,
@@ -206,7 +212,10 @@ export function projectJoin(tx: Transaction, request: ProjectJoin) {
 function planContext(tx: Transaction, request: PlanPublish | PlanEdit) {
   const project = tx.getProject(tx.projectId);
   tx.getSession(request.session_id);
-  if (project.coordinator_session_id !== request.session_id) {
+  if (
+    project.coordinator_session_id !== request.session_id &&
+    tx.getSession(request.session_id).actor_kind !== "human"
+  ) {
     throw new BoardError(
       "forbidden",
       "Only the coordinator can change the plan",
@@ -226,6 +235,24 @@ function planContext(tx: Transaction, request: PlanPublish | PlanEdit) {
   return {
     project,
     previous: new Map(tx.allTasks().map((task) => [task.id, task])),
+  };
+}
+
+function taskDetails(
+  value: Pick<
+    TaskFields,
+    "description" | "acceptance" | "priority" | "semantic_targets"
+  >,
+): Partial<TaskFields> {
+  return {
+    ...(value.description === undefined
+      ? {}
+      : { description: value.description }),
+    ...(value.acceptance === undefined ? {} : { acceptance: value.acceptance }),
+    ...(value.priority === undefined ? {} : { priority: value.priority }),
+    ...(value.semantic_targets === undefined
+      ? {}
+      : { semantic_targets: value.semantic_targets }),
   };
 }
 
@@ -360,6 +387,7 @@ export function planPublish(tx: Transaction, request: PlanPublish) {
   const tasks = new Map<TaskId, TaskFields>();
   for (const definition of request.tasks) {
     const fields = {
+      ...taskDetails(definition),
       label: definition.label,
       depends_on: definition.depends_on ?? [],
       ...(definition.status === undefined ? {} : { status: definition.status }),
@@ -400,6 +428,7 @@ export function planEdit(tx: Transaction, request: PlanEdit) {
         });
       }
       tasks.set(taskId, {
+        ...taskDetails(operation.task),
         label: operation.task.label,
         depends_on: operation.task.depends_on ?? [],
         status: operation.task.status ?? "pending",
@@ -416,6 +445,7 @@ export function planEdit(tx: Transaction, request: PlanEdit) {
       tasks.set(
         taskId,
         mergeTask(old, {
+          ...taskDetails(operation),
           ...(operation.label === undefined ? {} : { label: operation.label }),
           ...(operation.depends_on === undefined
             ? {}
@@ -602,7 +632,8 @@ export function workUpdate(tx: Transaction, request: WorkUpdate) {
     const old = tx.getWork(change.work_id);
     if (
       old.session_id !== request.session_id &&
-      project.coordinator_session_id !== request.session_id
+      project.coordinator_session_id !== request.session_id &&
+      tx.getSession(request.session_id).actor_kind !== "human"
     ) {
       throw new BoardError(
         "forbidden",

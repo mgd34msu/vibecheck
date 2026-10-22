@@ -10,6 +10,7 @@ import { Board, DEFAULT_REQUEST_RETENTION_MS } from "./board.js";
 import { identifierSchema } from "./schemas.js";
 import { createHttpApp, createServer } from "./server.js";
 import { version } from "./version.js";
+import { RemoteLedger } from "./remote.js";
 
 export class CliUsageError extends Error {}
 
@@ -35,6 +36,7 @@ export function defaultDatabase(
 const configurationSchema = z
   .object({
     transport: z.enum(["stdio", "streamable-http"]),
+    managed: z.boolean(),
     database: z.string(),
     host: z
       .string()
@@ -44,7 +46,7 @@ const configurationSchema = z
       .string()
       .regex(/^[+-]?\d+$/, "--port must be an integer")
       .transform(Number)
-      .pipe(z.number().int().min(1).max(65535)),
+      .pipe(z.number().int().min(0).max(65535)),
     allowedHosts: z.array(
       z
         .string()
@@ -57,6 +59,11 @@ const configurationSchema = z
     token: z.string(),
   })
   .superRefine((config, context) => {
+    if (config.port === 0 && !config.managed)
+      context.addIssue({
+        code: "custom",
+        message: "Port zero requires --managed",
+      });
     if (
       config.transport === "streamable-http" &&
       (!config.token || /\s/u.test(config.token))
@@ -85,6 +92,7 @@ export function parseArgs(
       strict: true,
       options: {
         transport: { type: "string", default: "stdio" },
+        managed: { type: "boolean", default: false },
         database: { type: "string", default: defaultDatabase(environment) },
         host: { type: "string", default: "127.0.0.1" },
         port: { type: "string", default: "8765" },
@@ -152,6 +160,7 @@ Usage: vibecheck [options]
   --host HOST                        Default: 127.0.0.1
   --port PORT                        Default: 8765
   --allowed-host HOST[:PORT]          Additional allowed Host; repeat as needed
+  --managed                          Emit readiness JSON; allow an ephemeral port
   --version                          Print version
   --help                             Print this help
 
@@ -172,14 +181,25 @@ export async function main(
     return;
   }
   const options = parseArgs(arguments_);
-  const board = new Board(options.database, {
-    requestRetentionMs: options.requestRetentionMs,
-  });
+  const board = process.env.VIBECHECK_SERVICE_URL
+    ? new RemoteLedger(
+        process.env.VIBECHECK_SERVICE_URL,
+        process.env.PROJECT_BOARD_TOKEN ?? "",
+      )
+    : new Board(options.database, {
+        requestRetentionMs: options.requestRetentionMs,
+      });
   const http =
     options.transport === "stdio"
       ? undefined
       : createHttpApp(board, {
           token: options.token,
+          ...(process.env.VIBECHECK_OBSERVER_TOKEN
+            ? { observerToken: process.env.VIBECHECK_OBSERVER_TOKEN }
+            : {}),
+          ...(process.env.VIBECHECK_COLLECTOR_TOKEN
+            ? { collectorToken: process.env.VIBECHECK_COLLECTOR_TOKEN }
+            : {}),
           host: options.host,
           allowedHosts: options.allowedHosts,
           ...(options.projects === undefined
@@ -201,6 +221,17 @@ export async function main(
           resolveListening();
         });
       });
+    if (http && options.managed) {
+      const address = http.server.address();
+      if (address && typeof address !== "string")
+        process.stdout.write(
+          JSON.stringify({
+            url: `http://127.0.0.1:${address.port}`,
+            version,
+            activity_version: 1,
+          }) + "\n",
+        );
+    }
     await new Promise<void>((resolveStopped) => {
       const stop = () => {
         process.off("SIGINT", stop);

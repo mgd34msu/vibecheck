@@ -1,3 +1,4 @@
+import { activitySchemaStatements } from "./activity-contracts.js";
 import { mkdir, open } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, resolve } from "node:path";
@@ -38,6 +39,7 @@ import {
 
 export const SCHEMA_VERSION = 1;
 const schemaStatements = [
+  ...activitySchemaStatements,
   `CREATE TABLE IF NOT EXISTS records (
     project_id TEXT NOT NULL, kind TEXT NOT NULL, id TEXT NOT NULL,
     revision INTEGER NOT NULL, body TEXT NOT NULL,

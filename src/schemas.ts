@@ -125,6 +125,8 @@ const mutationShape = {
 const sessionMutationShape = { ...mutationShape, session_id: sessionIdSchema };
 export const projectJoinSchema = z.strictObject({
   ...mutationShape,
+  actor_kind: z.enum(["agent", "human"]).optional(),
+  display_name: shortTextSchema.optional(),
   repository: shortTextSchema,
   vendor: shortTextSchema,
   runtime: shortTextSchema,
@@ -134,7 +136,18 @@ export const projectJoinSchema = z.strictObject({
   parent_session_id: sessionIdSchema.nullable().optional(),
   take_over_from: sessionIdSchema.nullable().optional(),
 });
+export const semanticTargetSchema = z.strictObject({
+  workspace_id: shortTextSchema,
+  node_id: identifierSchema,
+});
+export const taskDetailShape = {
+  description: z.string().max(16000).optional(),
+  acceptance: z.array(shortTextSchema).max(100).optional(),
+  priority: z.enum(["low", "normal", "high", "urgent"]).optional(),
+  semantic_targets: z.array(semanticTargetSchema).max(500).optional(),
+};
 export const taskDefinitionSchema = z.strictObject({
+  ...taskDetailShape,
   id: taskIdSchema,
   label: shortTextSchema,
   depends_on: z.array(taskIdSchema).max(1000).optional(),
@@ -152,6 +165,7 @@ export const planAddSchema = z.strictObject({
 });
 export const planUpdateSchema = z
   .strictObject({
+    ...taskDetailShape,
     op: z.literal("update"),
     task_id: taskIdSchema,
     label: shortTextSchema.optional(),
@@ -164,7 +178,11 @@ export const planUpdateSchema = z
       operation.label !== undefined ||
       operation.depends_on !== undefined ||
       operation.status !== undefined ||
-      operation.supersedes !== undefined,
+      operation.supersedes !== undefined ||
+      operation.description !== undefined ||
+      operation.acceptance !== undefined ||
+      operation.priority !== undefined ||
+      operation.semantic_targets !== undefined,
     { message: "update requires at least one changed field" },
   );
 export const planOperationSchema = z.discriminatedUnion("op", [
@@ -339,6 +357,8 @@ export const projectRecordSchema = z.strictObject({
   plan_revision: planRevisionSchema,
 });
 export const sessionRecordSchema = z.strictObject({
+  actor_kind: z.enum(["agent", "human"]).optional(),
+  display_name: shortTextSchema.optional(),
   ...metadataShape,
   id: sessionIdSchema,
   vendor: shortTextSchema,
@@ -352,6 +372,7 @@ export const sessionRecordSchema = z.strictObject({
   acknowledged_at: timestampSchema.optional(),
 });
 export const taskRecordSchema = z.strictObject({
+  ...taskDetailShape,
   ...metadataShape,
   id: taskIdSchema,
   label: shortTextSchema,
@@ -387,6 +408,7 @@ export type SessionFields = Omit<SessionRecord, MetadataKey>;
 export type TaskFields = Omit<TaskRecord, MetadataKey>;
 export type WorkFields = Omit<WorkRecord, MetadataKey>;
 export const taskMapDefinitionSchema = z.strictObject({
+  ...taskDetailShape,
   label: shortTextSchema,
   depends_on: z.array(taskIdSchema),
   supersedes: z.array(taskIdSchema).optional(),

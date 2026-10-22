@@ -24,6 +24,7 @@ export const platforms: Platform[] = ["codex", "claude"];
 export const commonFiles = [
   "README.md",
   "docs/protocol.md",
+  "docs/work-activity.md",
   "docs/agent-usage.md",
   `docs/releases/v${version}.md`,
   "examples/mcp.json",

@@ -1,6 +1,6 @@
 # Vibecheck
 
-Vibecheck is a passive MCP work ledger for coding agents. It records a shared task plan, session ancestry, claims, work locations, blockers, and commits in SQLite. Agents report changes through nine tools. The board does not run agents, schedule work, execute Git commands, or verify that reported work happened.
+Vibecheck is a passive MCP work ledger for coding agents. It records a shared task plan, session ancestry, claims, work locations, blockers, and commits in SQLite. Agents report changes through nine tools. The board does not run agents, schedule work, execute Git commands, or verify that reported work happened. Optional activity services add host session observation and versioned artifacts for explorers such as Plat.
 
 This repository contains the TypeScript implementation, version 1.0.2. The Python implementation is archived separately at [mgd34msu/vibecheck-python](https://github.com/mgd34msu/vibecheck-python).
 
@@ -333,3 +333,17 @@ The implementation derives domain types from input schemas. Boundary validation 
 See [release notes](docs/releases/v1.0.2.md) for the release contents and verification status.
 
 The board retains reported metadata, not repository knowledge or conversations. It does not scan the repository to understand code. Session identities and work status are cooperative self-reports; Git commits and actual outcomes require separate verification. Dependencies and `blocking_path` describe the graph without scheduling work or estimating completion time.
+
+## Work and activity service
+
+The optional [activity service](docs/work-activity.md) adds semantic task targets, explicit human operators, registered worktrees, host activity, session lifecycle, artifacts, and a recoverable observer feed. Existing nine-tool clients and schema-v1 ledger history remain supported. Activity storage has a separate version and retention policy.
+
+Run a managed loopback instance with an ephemeral port:
+
+```bash
+PROJECT_BOARD_TOKEN=YOUR_LOCAL_SECRET bun src/cli.ts --transport streamable-http --managed --port 0 --database /absolute/path/to/work.sqlite3
+```
+
+Managed startup writes one readiness JSON line containing the origin. Set `VIBECHECK_SERVICE_URL` and `PROJECT_BOARD_TOKEN` on stdio plugin processes to route their calls through this service. Separate `VIBECHECK_OBSERVER_TOKEN` and `VIBECHECK_COLLECTOR_TOKEN` credentials can restrict observer and ingestion clients.
+
+Codex collection is explicitly enabled for a registered project worktree through the activity API. It filters records by the exact worktree root and excludes instructions and reasoning records. Host patch requests are labeled requested operations; they do not prove successful file edits.
