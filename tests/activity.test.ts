@@ -246,6 +246,53 @@ test("observer, collector and manager credentials use distinct HTTP permissions"
     }),
   });
   assert.equal(collector.status, 403);
+  const operator = await board.call("project_join", {
+    project_id: PROJECT,
+    request_id: request(),
+    repository: "repo",
+    vendor: "local",
+    runtime: "operator",
+    external_session_id: "workspace",
+    model: "not-applicable",
+    actor_kind: "human",
+  });
+  const impersonated = await fetch(origin + `/v1/projects/${PROJECT}/command`, {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer collect",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      tool: "plan_ack",
+      request: {
+        project_id: PROJECT,
+        session_id: operator.session_id,
+        request_id: request(),
+        plan_revision: 0,
+      },
+    }),
+  });
+  assert.equal(impersonated.status, 403);
+  const rejoined = await fetch(origin + `/v1/projects/${PROJECT}/command`, {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer collect",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      tool: "project_join",
+      request: {
+        project_id: PROJECT,
+        request_id: request(),
+        repository: "repo",
+        vendor: "local",
+        runtime: "operator",
+        external_session_id: "workspace",
+        model: "not-applicable",
+      },
+    }),
+  });
+  assert.equal(rejoined.status, 403);
   const remote = new RemoteLedger(origin, "manage");
   const result = await remote.call("project_status", { project_id: PROJECT });
   assert.ok("sessions" in result);

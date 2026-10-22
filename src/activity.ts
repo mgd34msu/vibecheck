@@ -279,6 +279,32 @@ export class ActivityStore {
       };
     });
   }
+  async assertCollectorActor(
+    project: string,
+    request: Record<string, unknown>,
+  ) {
+    if (request.take_over_from != null)
+      throw new BoardError(
+        "forbidden",
+        "Collectors cannot change project coordination",
+      );
+    return this.board.database.read(this.project(project), (tx) => {
+      const existing = tx
+        .allSessions()
+        .find(
+          (session) =>
+            session.id === request.session_id ||
+            (session.vendor === request.vendor &&
+              session.runtime === request.runtime &&
+              session.external_session_id === request.external_session_id),
+        );
+      if (existing?.actor_kind === "human")
+        throw new BoardError(
+          "forbidden",
+          "Collector cannot act as a human operator",
+        );
+    });
+  }
   events(project: string, input: unknown) {
     const request = eventsQuerySchema.parse(input);
     return this.board.database.read(this.project(project), (tx) => {

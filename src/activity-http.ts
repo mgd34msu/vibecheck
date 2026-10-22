@@ -230,6 +230,8 @@ export class ActivityHttp {
             "forbidden",
             "Collector cannot manage plans or act as a human operator",
           );
+        if (role === "collector")
+          await this.store.assertCollectorActor(project, command.request);
         send(200, await this.board.call(command.tool, command.request));
         return;
       }
